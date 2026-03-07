@@ -1,0 +1,15 @@
+open_door:
+  name: Open door
+  description: Trigger set.device.opendoor on the configured WelcomeEye device.
+  fields:
+    entry_id:
+      required: false
+      selector:
+        text:
+    door:
+      required: false
+      selector:
+        number:
+          min: 1
+          max: 4
+          mode: box

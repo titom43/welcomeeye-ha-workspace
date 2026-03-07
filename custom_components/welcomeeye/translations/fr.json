@@ -1,0 +1,40 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "WelcomeEye",
+        "description": "Configurer l'accès CGI du périphérique et (optionnel) le down-channel auth.",
+        "data": {
+          "name": "Nom",
+          "device_host": "IP ou hôte du périphérique",
+          "cgi_port": "Port CGI",
+          "scheme": "Schéma",
+          "username": "Nom d'utilisateur device",
+          "device_password": "Mot de passe device",
+          "data_encode_key": "Data encode key (non-HS)",
+          "hs_device": "Périphérique HS",
+          "security": "Header security",
+          "door": "Index de porte",
+          "open_password": "Mot de passe d'ouverture",
+          "verify_ssl": "Vérifier le certificat TLS",
+          "enable_downchannel": "Activer le listener down-channel",
+          "auth_base_url": "URL de base auth",
+          "auth_mode": "Mode auth",
+          "auth_account": "Compte auth",
+          "auth_password": "Mot de passe auth",
+          "auth_type": "Type auth",
+          "auth_code": "Code auth",
+          "ip_region_id": "IP region ID",
+          "read_timeout": "Timeout lecture down-channel (s)"
+        }
+      }
+    },
+    "error": {
+      "required": "Ce champ est requis.",
+      "invalid_port": "Le port doit être supérieur à 0.",
+      "invalid_door": "L'index de porte doit être supérieur à 0.",
+      "invalid_timeout": "Le timeout doit être au moins 5 secondes.",
+      "auth_credentials_required": "Compte et mot de passe auth requis pour ce mode."
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "domain": "welcomeeye",
+  "name": "WelcomeEye Local",
+  "codeowners": ["@titom43"],
+  "config_flow": true,
+  "documentation": "https://github.com/titom43/welcomeeye-ha-workspace",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/titom43/welcomeeye-ha-workspace/issues",
+  "loggers": ["custom_components.welcomeeye"],
+  "requirements": [],
+  "version": "0.1.0"
+}

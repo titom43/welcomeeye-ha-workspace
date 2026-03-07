@@ -1,0 +1,47 @@
+from homeassistant.const import Platform
+
+DOMAIN = "welcomeeye"
+PLATFORMS: list[Platform] = [Platform.BUTTON, Platform.SENSOR]
+
+CONF_NAME = "name"
+CONF_DEVICE_HOST = "device_host"
+CONF_CGI_PORT = "cgi_port"
+CONF_SCHEME = "scheme"
+CONF_USERNAME = "username"
+CONF_DEVICE_PASSWORD = "device_password"
+CONF_DATA_ENCODE_KEY = "data_encode_key"
+CONF_HS_DEVICE = "hs_device"
+CONF_SECURITY = "security"
+CONF_DOOR = "door"
+CONF_OPEN_PASSWORD = "open_password"
+CONF_VERIFY_SSL = "verify_ssl"
+
+CONF_ENABLE_DOWNCHANNEL = "enable_downchannel"
+CONF_AUTH_BASE_URL = "auth_base_url"
+CONF_AUTH_MODE = "auth_mode"
+CONF_AUTH_ACCOUNT = "auth_account"
+CONF_AUTH_PASSWORD = "auth_password"
+CONF_AUTH_TYPE = "auth_type"
+CONF_AUTH_CODE = "auth_code"
+CONF_IP_REGION_ID = "ip_region_id"
+CONF_READ_TIMEOUT = "read_timeout"
+
+DEFAULT_NAME = "WelcomeEye"
+DEFAULT_SCHEME = "http"
+DEFAULT_CGI_PORT = 80
+DEFAULT_SECURITY = "username"
+DEFAULT_DOOR = 1
+DEFAULT_VERIFY_SSL = False
+DEFAULT_ENABLE_DOWNCHANNEL = False
+DEFAULT_AUTH_MODE = "user"
+DEFAULT_AUTH_TYPE = 0
+DEFAULT_IP_REGION_ID = 0
+DEFAULT_READ_TIMEOUT = 45
+
+AUTH_MODES = ["user", "third", "deli", "free"]
+
+DATA_RUNTIME = "runtime"
+DATA_SERVICE_REGISTERED = "service_registered"
+SIGNAL_EVENT = f"{DOMAIN}_event_{{entry_id}}"
+
+SERVICE_OPEN_DOOR = "open_door"

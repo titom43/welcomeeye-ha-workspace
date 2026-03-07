@@ -1,0 +1,7 @@
+{
+  "name": "WelcomeEye Local",
+  "content_in_root": false,
+  "domains": ["welcomeeye"],
+  "homeassistant": "2024.8.0",
+  "iot_class": "local_push"
+}
