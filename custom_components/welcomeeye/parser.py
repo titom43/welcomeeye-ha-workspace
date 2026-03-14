@@ -25,12 +25,22 @@ def parse_alarm_history_item(item: dict[str, Any]) -> dict[str, Any]:
 
     event_type = "other"
     unlock_method = None
+    badge_id = None
 
     if event_code == 19 and alarm_state == 1:
         event_type = "ring"
     elif event_code == 63 and alarm_state == 5:
         event_type = "unlock"
         unlock_method = "badge"
+        # Try to find badge ID in source name or other fields
+        hay = f"{source_name or ''} {source or ''}".lower()
+        badge_match = BADGE_ID_RE.search(hay)
+        if badge_match:
+            badge_id = badge_match.group(1)
+        elif source_name and "badge" in source_name.lower():
+            # Fallback: use source_name if it looks like a badge name
+            badge_id = source_name
+
     elif event_code == 63 and alarm_state == 4:
         event_type = "unlock"
         unlock_method = "app_or_remote"
@@ -43,7 +53,7 @@ def parse_alarm_history_item(item: dict[str, Any]) -> dict[str, Any]:
         "alarm_state": alarm_state,
         "command": "client-query-recordlist",
         "unlock_method": unlock_method,
-        "badge_id": None,
+        "badge_id": badge_id,
         "lock_number": lock_number,
         "alarm_info": alarm_info,
         "source": source,

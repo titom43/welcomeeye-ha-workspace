@@ -76,23 +76,30 @@ class WelcomeEyeRuntime:
 
     async def _run_alarm_poll(self) -> None:
         initialized = False
+        _LOGGER.debug("Starting alarm poll loop")
         
+        # Initial login attempt
+        try:
+            if await self.client.login_auth():
+                await self.client.login_alarm()
+        except Exception as exc:
+            _LOGGER.error("Initial cloud login failed: %s", exc)
+
         while not self._stop.is_set():
-            # Calculate wait time
             poll_min = self.config.get(CONF_POLL_INTERVAL_MIN, 5)
-            wait_seconds = poll_min * 60 if poll_min > 0 else 3600 # Fallback high wait if 0
+            wait_seconds = poll_min * 60 if poll_min > 0 else 3600
             
             try:
-                # Perform the query
+                _LOGGER.debug("Querying alarm list...")
                 items = await self.client.query_alarm_list(page_num=0, page_line_num=15)
                 
                 if not items:
-                    _LOGGER.debug("Alarm query empty or failed, trying re-login")
+                    _LOGGER.debug("Alarm query empty, trying re-login")
                     await self.client.login_auth()
                     await self.client.login_alarm()
-                    # Short wait after failure
+                    # Si c'est toujours vide après re-login, on attend un peu
                     try:
-                        await asyncio.wait_for(self._refresh_event.wait(), timeout=60)
+                        await asyncio.wait_for(self._refresh_event.wait(), timeout=30)
                         self._refresh_event.clear()
                     except asyncio.TimeoutError:
                         pass
@@ -100,36 +107,38 @@ class WelcomeEyeRuntime:
 
                 latest = items[0]
                 latest_id = latest.get("id") or latest.get("alarmid")
+                _LOGGER.debug("Latest alarm ID: %s (last seen: %s)", latest_id, self._last_alarm_id)
                 
                 if not initialized:
                     self._last_alarm_id = latest_id
                     initialized = True
+                    _LOGGER.debug("Watcher initialized with ID %s", latest_id)
                 elif latest_id and latest_id != self._last_alarm_id:
                     self._last_alarm_id = latest_id
                     parsed = parse_alarm_history_item(latest)
+                    _LOGGER.debug("New event detected and parsed: %s", parsed)
                     if parsed.get("event_type") != "other":
-                        _LOGGER.debug("New event detected: %s", parsed)
                         self.last_event = parsed
                         async_dispatcher_send(self.hass, SIGNAL_EVENT.format(entry_id=self.entry_id))
                 
                 # Wait for next poll or manual refresh
                 try:
                     if poll_min > 0:
+                        _LOGGER.debug("Waiting %s seconds for next poll", wait_seconds)
                         await asyncio.wait_for(self._refresh_event.wait(), timeout=wait_seconds)
                     else:
-                        # 0 means only manual refresh
+                        _LOGGER.debug("Waiting for manual refresh (poll_min=0)")
                         await self._refresh_event.wait()
                     
                     self._refresh_event.clear()
-                    _LOGGER.debug("Polling triggered by refresh event or timeout")
+                    _LOGGER.debug("Polling triggered by refresh event")
                 except asyncio.TimeoutError:
-                    # Normal timeout, continue to next loop
                     pass
 
             except asyncio.CancelledError:
                 raise
             except Exception as exc:  # noqa: BLE001
-                _LOGGER.debug("Alarm poll loop error: %s", exc, exc_info=True)
+                _LOGGER.exception("Alarm poll loop error: %s", exc)
                 await asyncio.sleep(60)
 
 
