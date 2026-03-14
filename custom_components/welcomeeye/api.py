@@ -456,46 +456,72 @@ class WelcomeEyeClient:
             return {"ok": False, "error": str(exc), "method": "failed"}
 
     async def login_auth(self) -> bool:
-        base = self._auth_base()
+        configured_base = self._auth_base()
         mode = self._config.get(CONF_AUTH_MODE)
-        if not base or mode not in AUTH_MODES:
+        if mode not in AUTH_MODES:
             return False
         if mode != "free" and (
             not self._config.get(CONF_AUTH_ACCOUNT) or not self._config.get(CONF_AUTH_PASSWORD)
         ):
             return False
 
+        # If we have a dynamic base that worked before, use it first
+        bases_to_try = []
+        if self._dynamic_auth_base:
+            bases_to_try.append(self._dynamic_auth_base)
+        if configured_base:
+            bases_to_try.append(configured_base)
+            
+        # Add seeds if needed (common entry points)
+        seeds = [
+            "https://shi-19-sec.qvcloud.net",
+            "https://shi-27-sec.qvcloud.net",
+            "https://shi-1-sec.qvcloud.net",
+            "https://api-sec.qvcloud.net",
+        ]
+        for seed in seeds:
+            if seed not in bases_to_try:
+                bases_to_try.append(seed)
+
         path = UP_PATH_BY_MODE[mode]
-        url = f"{base}{path}"
         payload = _build_login_xml(self._config)
         headers = {"Content-Type": "application/xml;charset=utf-8", "Accept": "*/*"}
-        try:
-            resp = await self._request("POST", url, data=payload, headers=headers, timeout=15)
-            body = await resp.text()
-            if resp.status != 200:
-                _LOGGER.warning("Auth login failed status=%s body=%s", resp.status, body[:300])
-                return False
 
-            self._cookies.clear()
-            for cookie in resp.cookies.values():
-                self._cookies[cookie.key] = cookie.value
-            
-            root = ET.fromstring(body)
-            res = root.findtext("./header/result")
-            if res != "0":
-                _LOGGER.warning("Auth login result error: %s", res)
-                return False
+        for base in bases_to_try:
+            url = f"{base.rstrip('/')}{path}"
+            _LOGGER.debug("Attempting auth login on %s", url)
+            try:
+                resp = await self._request("POST", url, data=payload, headers=headers, timeout=10)
+                body = await resp.text()
+                if resp.status != 200:
+                    continue
 
-            self._auth_session_id = root.findtext("./header/session/id") or root.findtext("./header/session")
-            content = root.find("./content")
-            if content is not None:
-                self._account_id = (content.findtext("account-id") or "").strip()
-                self._auth_token = (content.findtext("token") or "").strip()
-            
-            return True
-        except Exception as exc:
-            _LOGGER.error("Failed to perform/parse login: %s", exc)
-            return False
+                self._cookies.clear()
+                for cookie in resp.cookies.values():
+                    self._cookies[cookie.key] = cookie.value
+                
+                root = ET.fromstring(body)
+                res = root.findtext("./header/result")
+                if res != "0":
+                    _LOGGER.warning("Auth login error on %s: %s", base, res)
+                    continue
+
+                self._auth_session_id = root.findtext("./header/session/id") or root.findtext("./header/session")
+                content = root.find("./content")
+                if content is not None:
+                    self._account_id = (content.findtext("account-id") or "").strip()
+                    self._auth_token = (content.findtext("token") or "").strip()
+                
+                # Success! Save this as our current auth base
+                self._dynamic_auth_base = base
+                _LOGGER.info("Successfully logged in to WelcomeEye Cloud via %s", base)
+                return True
+            except Exception as exc:
+                _LOGGER.debug("Auth login failed on %s: %s", base, exc)
+                continue
+
+        _LOGGER.error("Failed to find a working WelcomeEye Cloud authentication server")
+        return False
 
     async def login_alarm(self) -> bool:
         auth_base = self._auth_base()
