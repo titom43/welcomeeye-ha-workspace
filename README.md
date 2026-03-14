@@ -5,86 +5,54 @@
 </p>
 
 <p align="center">
-  Local control for WelcomeEye intercoms from Home Assistant.
+  Local control and cloud event monitoring for WelcomeEye Connect 3 intercoms from Home Assistant.
 </p>
 
-<p align="center">
-  <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=titom43&repository=welcomeeye-ha-workspace&category=integration">
-    <img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open your Home Assistant instance and open this repository in HACS">
-  </a>
-  <a href="https://my.home-assistant.io/redirect/config_flow_start/?domain=welcomeeye">
-    <img src="https://my.home-assistant.io/badges/config_flow_start.svg" alt="Open your Home Assistant instance and start setting up WelcomeEye Local">
-  </a>
-</p>
+## Features
 
-## What it does
-
-- Opens the **latch** and the **gate** through the local device API.
-- Supports direct LAN control without an Android bridge.
-- Exposes simple Home Assistant entities and a door opening service.
-
-Current local scope:
-
-- `lock_number=1` -> latch
-- `lock_number=2` -> gate
+- **Local Unlock**: Open the **latch** (gâche) and the **gate** (portail) directly via the local device API. No cloud latency for opening.
+- **Cloud Watcher**: Monitor events (doorbell rings, badge unlocks, app unlocks) via a robust polling mechanism.
+- **Dedicated Entities**: 
+    - Binary Sensor for the doorbell.
+    - Buttons for opening latch and gate.
+    - Sensor for the last event type, unlock method, and badge ID.
+    - Manual refresh button to trigger an instant event check.
 
 ## Installation
 
-### HACS
+### HACS (Recommended)
 
-1. Open the HACS button above.
-2. Add this repository as an **Integration**.
-3. Install **WelcomeEye Local**.
-4. Restart Home Assistant.
-5. Add the integration from `Settings -> Devices & Services`.
-
-### Manual
-
-1. Copy `custom_components/welcomeeye` into your Home Assistant `custom_components` directory.
-2. Restart Home Assistant.
-3. Add the integration from `Settings -> Devices & Services`.
+1. Add this repository as a **Custom Repository** in HACS (Integration category).
+2. Install **WelcomeEye Local**.
+3. Restart Home Assistant.
+4. Go to `Settings -> Devices & Services -> Add Integration` and search for **WelcomeEye**.
 
 ## Configuration
 
-Recommended local defaults:
+The setup is simplified to the essentials:
 
-- `scheme=https`
-- `cgi_port=443`
-- `username=adminapp2`
-- `security=username`
-
-Password fields accept either:
-
-- the raw device code you chose on the monitor
-- or the already encoded 64-character SHA-256 value
+- **Intercom IP**: Local IP address of your monitor.
+- **Local Code**: The 6-digit code you configured on the monitor screen.
+- **Cloud Email & Password**: Your Philips WelcomeEye app credentials (optional, enables the Watcher).
+- **Intercom ID / CID**: The unique ID of your intercom (found in the app settings, e.g., `2502uvs...`).
+- **Poll Frequency**: How often to check for events (in minutes, set to 0 to disable automatic polling).
 
 ## Entities
 
-- Button: `Open Latch`
-- Button: `Open Gate`
-- Sensor: `Last Event Type`
-- Sensor: `Last Unlock Method`
-- Sensor: `Last Badge ID`
-
-## Service
-
-Service name:
-
-- `welcomeeye.open_door`
-
-Optional service fields:
-
-- `entry_id`
-- `door`
-- `lock_number`
+- **Binary Sensor**: `Doorbell` (turns on for 10 seconds when someone rings).
+- **Button**: `Open Latch` (Gâche).
+- **Button**: `Open Gate` (Portail).
+- **Button**: `Refresh Events` (Manual poll).
+- **Sensor**: `Last Event Type`.
+- **Sensor**: `Last Unlock Method`.
+- **Sensor**: `Last Badge ID`.
 
 ## Notes
 
-- Local unlock uses the device XML API on `https://<device_host>:443/tdkcgi`.
-- Badge names are not currently exposed by the payloads we observed.
-- The integration is designed to stay usable with only the data needed for Home Assistant.
+- Opening is done locally via the XML API on `/tdkcgi`.
+- Event monitoring (Watcher) requires cloud credentials and uses a polling strategy for better stability than long-polling.
+- The integration is designed to be 100% focused on Home Assistant needs, keeping technical complexity hidden.
 
 ## Support
 
 - Issues: [GitHub Issues](https://github.com/titom43/welcomeeye-ha-workspace/issues)
-- Documentation: [Repository](https://github.com/titom43/welcomeeye-ha-workspace)
