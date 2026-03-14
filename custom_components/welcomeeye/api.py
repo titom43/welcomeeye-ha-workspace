@@ -298,6 +298,7 @@ class WelcomeEyeClient:
         self._auth_token: str | None = None
         self._dynamic_auth_base: str | None = None
         self._dynamic_alarm_base: str | None = None
+        self._auth_server_host: str | None = None
 
     @property
     def _ssl(self) -> bool:
@@ -505,6 +506,7 @@ class WelcomeEyeClient:
                 
                 # Success! Save this as our current auth base
                 self._dynamic_auth_base = base
+                self._auth_server_host = urlparse(base).hostname
                 _LOGGER.info("Successfully logged in to WelcomeEye Cloud via %s", base)
                 return True
             except Exception as exc:
@@ -526,7 +528,7 @@ class WelcomeEyeClient:
             candidates.append(explicit)
         candidates.extend(_candidate_alarm_bases(auth_base))
 
-        auth_server_host = urlparse(auth_base).hostname or ""
+        auth_server_host = self._auth_server_host or urlparse(auth_base).hostname or ""
         headers = {
             "Content-Type": "application/xml;charset=utf-8",
             "Accept": "*/*",
