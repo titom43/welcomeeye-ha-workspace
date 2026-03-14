@@ -152,7 +152,7 @@ def _build_alarm_login_xml(
         "<appid>4123</appid>"
         f"<id>{client_id}</id>"
         "<notifylang>French</notifylang>"
-        "<oemid>ha</oemid>"
+        "<oemid>G0123,A0058,G0058</oemid>"
         "<timezone>GMT+01:00</timezone>"
         f"<token>{config.get(CONF_AUTH_CODE, auth_token)}</token>"
         "<tokentype>1</tokentype>"
@@ -214,34 +214,6 @@ def _candidate_alarm_bases(auth_base_url: str) -> list[str]:
             continue
         out.append(f"{parsed.scheme}://{prefix}{cand_n}{suffix}:4443")
     return out
-
-
-def _build_open_door_xml(
-    config: dict[str, Any],
-    *,
-    door: int | None = None,
-    lock_number: int | None = None,
-) -> str:
-    door_value = door if door is not None else config.get(CONF_DOOR, 1)
-    lock_value = lock_number if lock_number is not None else config.get(CONF_LOCK_NUMBER, 1)
-    return (
-        '<?xml version="1.0" encoding="UTF-8"?>'
-        "<envelope>"
-        "<header>"
-        f"<security>{config.get(CONF_SECURITY, 'username')}</security>"
-        f"<username>{config.get(CONF_USERNAME, 'adminapp2')}</username>"
-        f"<password>{config.get(CONF_DEVICE_PASSWORD, '')}</password>"
-        "</header>"
-        "<body>"
-        "<command>set.device.opendoor</command>"
-        "<content>"
-        f"<door>{door_value}</door>"
-        f"<locknumber>{lock_value}</locknumber>"
-        f"<password>{config.get(CONF_OPEN_PASSWORD, '')}</password>"
-        "</content>"
-        "</body>"
-        "</envelope>"
-    )
 
 
 def _build_local_open_door_xml(
@@ -364,7 +336,7 @@ class WelcomeEyeClient:
         if not account or not password:
             return False
 
-        # SHA256 Hashing
+        # SHA256 Hashing only if not already hashed (64 chars)
         if len(password) != 64:
             password = hashlib.sha256(password.encode("utf-8")).hexdigest()
 
@@ -375,10 +347,9 @@ class WelcomeEyeClient:
         if self._dynamic_auth_base: bases_to_try.append(self._dynamic_auth_base)
         if self._auth_base(): bases_to_try.append(self._auth_base())
         
+        # Add seeds (common entry points)
         seeds = [
             "https://shi-19-sec.qvcloud.net",
-            "https://shi-19-sec.qvcloud.net:4443",
-            "https://shi-27-sec.qvcloud.net",
             "https://api-sec.qvcloud.net",
         ]
         for seed in seeds:
