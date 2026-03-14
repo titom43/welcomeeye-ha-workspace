@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  Local control and cloud event monitoring for WelcomeEye Connect 3 intercoms from Home Assistant. 
+  Home Assistant integration for WelcomeEye Connect 3 intercoms. 
   
   **Note:** This integration is specifically designed for the **WelcomeEye Connect 3** using the **Philips WelcomeEye Door Connect** mobile application.
 </p>
