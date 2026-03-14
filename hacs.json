@@ -1,5 +1,5 @@
 {
-  "name": "WelcomeEye Local",
+  "name": "WelcomeEye Door Connect",
   "content_in_root": false,
   "domains": ["welcomeeye"],
   "homeassistant": "2024.8.0",
