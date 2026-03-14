@@ -10,12 +10,13 @@
           "cgi_port": "Port CGI",
           "scheme": "Schéma",
           "username": "Nom d'utilisateur device",
-          "device_password": "Mot de passe device",
+          "device_password": "Mot de passe d'auth locale",
           "data_encode_key": "Data encode key (non-HS)",
           "hs_device": "Périphérique HS",
           "security": "Header security",
           "door": "Index de porte",
-          "open_password": "Mot de passe d'ouverture",
+          "lock_number": "Serrure par défaut",
+          "open_password": "Mot de passe d'ouverture porte",
           "verify_ssl": "Vérifier le certificat TLS",
           "enable_downchannel": "Activer le listener down-channel",
           "auth_base_url": "URL de base auth",
@@ -33,6 +34,7 @@
       "required": "Ce champ est requis.",
       "invalid_port": "Le port doit être supérieur à 0.",
       "invalid_door": "L'index de porte doit être supérieur à 0.",
+      "invalid_lock_number": "La serrure doit valoir 1 ou 2.",
       "invalid_timeout": "Le timeout doit être au moins 5 secondes.",
       "auth_credentials_required": "Compte et mot de passe auth requis pour ce mode."
     }

@@ -12,6 +12,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .api import WelcomeEyeClient
 from .const import (
     CONF_DOOR,
+    CONF_LOCK_NUMBER,
     DATA_RUNTIME,
     DATA_SERVICE_REGISTERED,
     DOMAIN,
@@ -36,10 +37,13 @@ async def _async_register_services(hass: HomeAssistant) -> None:
         if not runtime:
             raise HomeAssistantError("No matching WelcomeEye config entry for this service call.")
 
-        result = await runtime.async_open_door(door=call.data.get(CONF_DOOR))
+        result = await runtime.async_open_door(
+            door=call.data.get(CONF_DOOR),
+            lock_number=call.data.get(CONF_LOCK_NUMBER),
+        )
         if not result.get("ok"):
             raise HomeAssistantError(
-                f"Open door failed: HTTP {result.get('http_status')} CGI error {result.get('cgi_error')}"
+                f"Open door failed via {result.get('method')}: HTTP {result.get('http_status')} CGI error {result.get('cgi_error')}"
             )
 
     hass.services.async_register(
@@ -50,6 +54,7 @@ async def _async_register_services(hass: HomeAssistant) -> None:
             {
                 vol.Optional("entry_id"): cv.string,
                 vol.Optional(CONF_DOOR): cv.positive_int,
+                vol.Optional(CONF_LOCK_NUMBER): vol.In([1, 2]),
             }
         ),
     )

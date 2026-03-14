@@ -21,6 +21,7 @@ from .const import (
     CONF_DEVICE_HOST,
     CONF_DEVICE_PASSWORD,
     CONF_DOOR,
+    CONF_LOCK_NUMBER,
     CONF_HS_DEVICE,
     CONF_IP_REGION_ID,
     CONF_OPEN_PASSWORD,
@@ -100,8 +101,14 @@ def _build_digest_authorization(
     )
 
 
-def _build_open_door_xml(config: dict[str, Any], door: int | None = None) -> str:
+def _build_open_door_xml(
+    config: dict[str, Any],
+    *,
+    door: int | None = None,
+    lock_number: int | None = None,
+) -> str:
     door_value = door if door is not None else config[CONF_DOOR]
+    lock_value = lock_number if lock_number is not None else config.get(CONF_LOCK_NUMBER, 1)
     return (
         '<?xml version="1.0" encoding="UTF-8"?>'
         "<envelope>"
@@ -114,7 +121,41 @@ def _build_open_door_xml(config: dict[str, Any], door: int | None = None) -> str
         "<command>set.device.opendoor</command>"
         "<content>"
         f"<door>{door_value}</door>"
+        f"<locknumber>{lock_value}</locknumber>"
         f"<password>{config[CONF_OPEN_PASSWORD]}</password>"
+        "</content>"
+        "</body>"
+        "</envelope>"
+    )
+
+
+def _build_local_open_door_xml(
+    config: dict[str, Any],
+    *,
+    door: int | None = None,
+    lock_number: int | None = None,
+) -> str:
+    door_value = door if door is not None else config[CONF_DOOR]
+    lock_value = lock_number if lock_number is not None else config.get(CONF_LOCK_NUMBER, 1)
+    header_password = config.get(CONF_DEVICE_PASSWORD) or config.get(CONF_OPEN_PASSWORD, "")
+    open_password = config.get(CONF_OPEN_PASSWORD) or header_password
+    username = config.get(CONF_USERNAME) or "adminapp2"
+    security = config.get(CONF_SECURITY, "username")
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        "<envelope>"
+        "<header>"
+        f"<security>{security}</security>"
+        f"<username>{username}</username>"
+        f"<password>{header_password}</password>"
+        "<passwordencode>1</passwordencode>"
+        "</header>"
+        "<body>"
+        "<command>set.device.opendoor</command>"
+        "<content>"
+        f"<door>{door_value}</door>"
+        f"<locknumber>{lock_value}</locknumber>"
+        f"<password>{open_password}</password>"
         "</content>"
         "</body>"
         "</envelope>"
@@ -201,21 +242,49 @@ class WelcomeEyeClient:
             kwargs["timeout"] = timeout
         return await self._session.request(method, url, data=data, headers=headers, **kwargs)
 
-    async def open_door(self, door: int | None = None) -> dict[str, Any]:
-        xml_payload = _build_open_door_xml(self._config, door=door)
+    async def open_door(self, door: int | None = None, lock_number: int | None = None) -> dict[str, Any]:
         path = "/tdkcgi"
         url = f"{self._cgi_base}{path}"
-
         headers = {"Content-Type": "application/xml;charset=utf-8", "Accept": "*/*"}
+
+        # Preferred local/LAN path: XML auth in the envelope header, no HTTP digest.
+        local_xml_payload = _build_local_open_door_xml(
+            self._config,
+            door=door,
+            lock_number=lock_number,
+        )
+        local = await self._request("POST", url, data=local_xml_payload, headers=headers, timeout=12)
+        local_body = await local.text()
+        local_error = _parse_cgi_error(local_body)
+        if local.status == 200 and local_error == "0":
+            return {
+                "ok": True,
+                "http_status": local.status,
+                "cgi_error": local_error,
+                "response": local_body[:4000],
+                "method": "local_xml",
+            }
+        if local_error not in {"401", None, ""}:
+            return {
+                "ok": False,
+                "http_status": local.status,
+                "cgi_error": local_error,
+                "response": local_body[:4000],
+                "method": "local_xml",
+            }
+
+        # Fallback for older digest-based setups kept for compatibility.
+        xml_payload = _build_open_door_xml(self._config, door=door, lock_number=lock_number)
         first = await self._request("POST", url, data=xml_payload, headers=headers, timeout=12)
         first_body = await first.text()
+        first_error = _parse_cgi_error(first_body)
         if first.status != 401:
-            error = _parse_cgi_error(first_body)
             return {
-                "ok": first.status == 200 and error == "0",
+                "ok": first.status == 200 and first_error == "0",
                 "http_status": first.status,
-                "cgi_error": error,
+                "cgi_error": first_error,
                 "response": first_body[:4000],
+                "method": "digest_fallback",
             }
 
         challenge = _parse_challenge(first.headers.get("WWW-Authenticate", ""))
@@ -237,6 +306,7 @@ class WelcomeEyeClient:
             "http_status": second.status,
             "cgi_error": error,
             "response": second_body[:4000],
+            "method": "digest_fallback",
         }
 
     async def login_auth(self) -> bool:

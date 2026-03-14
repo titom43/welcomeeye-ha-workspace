@@ -21,6 +21,7 @@ from .const import (
     CONF_DEVICE_HOST,
     CONF_DEVICE_PASSWORD,
     CONF_DOOR,
+    CONF_LOCK_NUMBER,
     CONF_ENABLE_DOWNCHANNEL,
     CONF_HS_DEVICE,
     CONF_IP_REGION_ID,
@@ -35,6 +36,7 @@ from .const import (
     DEFAULT_AUTH_TYPE,
     DEFAULT_CGI_PORT,
     DEFAULT_DOOR,
+    DEFAULT_LOCK_NUMBER,
     DEFAULT_ENABLE_DOWNCHANNEL,
     DEFAULT_IP_REGION_ID,
     DEFAULT_NAME,
@@ -55,12 +57,15 @@ def _schema(defaults: dict[str, Any]) -> vol.Schema:
             vol.Required(CONF_SCHEME, default=defaults.get(CONF_SCHEME, DEFAULT_SCHEME)): vol.In(
                 ["http", "https"]
             ),
-            vol.Required(CONF_USERNAME, default=defaults.get(CONF_USERNAME, "")): str,
+            vol.Required(CONF_USERNAME, default=defaults.get(CONF_USERNAME, "adminapp2")): str,
             vol.Required(CONF_DEVICE_PASSWORD, default=defaults.get(CONF_DEVICE_PASSWORD, "")): str,
             vol.Optional(CONF_DATA_ENCODE_KEY, default=defaults.get(CONF_DATA_ENCODE_KEY, "")): str,
             vol.Required(CONF_HS_DEVICE, default=defaults.get(CONF_HS_DEVICE, False)): bool,
             vol.Required(CONF_SECURITY, default=defaults.get(CONF_SECURITY, DEFAULT_SECURITY)): str,
             vol.Required(CONF_DOOR, default=defaults.get(CONF_DOOR, DEFAULT_DOOR)): int,
+            vol.Required(CONF_LOCK_NUMBER, default=defaults.get(CONF_LOCK_NUMBER, DEFAULT_LOCK_NUMBER)): vol.In(
+                [1, 2]
+            ),
             vol.Optional(CONF_OPEN_PASSWORD, default=defaults.get(CONF_OPEN_PASSWORD, "")): str,
             vol.Required(CONF_VERIFY_SSL, default=defaults.get(CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL)): bool,
             vol.Required(
@@ -87,6 +92,8 @@ def _validate(data: dict[str, Any]) -> dict[str, str]:
         errors[CONF_CGI_PORT] = "invalid_port"
     if data[CONF_DOOR] <= 0:
         errors[CONF_DOOR] = "invalid_door"
+    if data[CONF_LOCK_NUMBER] not in (1, 2):
+        errors[CONF_LOCK_NUMBER] = "invalid_lock_number"
     if data[CONF_READ_TIMEOUT] < 5:
         errors[CONF_READ_TIMEOUT] = "invalid_timeout"
     if data[CONF_ENABLE_DOWNCHANNEL]:

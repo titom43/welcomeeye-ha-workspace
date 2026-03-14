@@ -1,6 +1,6 @@
 open_door:
   name: Open door
-  description: Trigger set.device.opendoor on the configured WelcomeEye device.
+  description: Trigger local set.device.opendoor on the configured WelcomeEye device.
   fields:
     entry_id:
       required: false
@@ -13,3 +13,12 @@ open_door:
           min: 1
           max: 4
           mode: box
+    lock_number:
+      required: false
+      selector:
+        select:
+          options:
+            - label: Gâche
+              value: 1
+            - label: Portail
+              value: 2

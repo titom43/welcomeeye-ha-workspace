@@ -44,8 +44,8 @@ class WelcomeEyeRuntime:
                 pass
             self._task = None
 
-    async def async_open_door(self, door: int | None = None) -> dict[str, Any]:
-        result = await self.client.open_door(door=door)
+    async def async_open_door(self, door: int | None = None, lock_number: int | None = None) -> dict[str, Any]:
+        result = await self.client.open_door(door=door, lock_number=lock_number)
         self.last_open_result = result
         if result.get("ok"):
             self.last_event = {
@@ -53,6 +53,7 @@ class WelcomeEyeRuntime:
                 "unlock_method": "app_or_remote",
                 "badge_id": None,
                 "command": "set.device.opendoor",
+                "lock_number": lock_number or self.config.get("lock_number", 1),
                 "raw": result.get("response", ""),
             }
         async_dispatcher_send(self.hass, SIGNAL_EVENT.format(entry_id=self.entry_id))

@@ -13,6 +13,7 @@ CONF_DATA_ENCODE_KEY = "data_encode_key"
 CONF_HS_DEVICE = "hs_device"
 CONF_SECURITY = "security"
 CONF_DOOR = "door"
+CONF_LOCK_NUMBER = "lock_number"
 CONF_OPEN_PASSWORD = "open_password"
 CONF_VERIFY_SSL = "verify_ssl"
 
@@ -27,10 +28,11 @@ CONF_IP_REGION_ID = "ip_region_id"
 CONF_READ_TIMEOUT = "read_timeout"
 
 DEFAULT_NAME = "WelcomeEye"
-DEFAULT_SCHEME = "http"
-DEFAULT_CGI_PORT = 80
+DEFAULT_SCHEME = "https"
+DEFAULT_CGI_PORT = 443
 DEFAULT_SECURITY = "username"
 DEFAULT_DOOR = 1
+DEFAULT_LOCK_NUMBER = 1
 DEFAULT_VERIFY_SSL = False
 DEFAULT_ENABLE_DOWNCHANNEL = False
 DEFAULT_AUTH_MODE = "user"

@@ -16,12 +16,24 @@ This repository now contains:
 
 ### Parameters requested at install
 
-- Device CGI:
+- Local LAN control:
   - `device_host`, `cgi_port`, `scheme`
-  - `username`, `device_password`
-  - `hs_device` (on/off)
-  - `data_encode_key` (needed for non-HS digest mode)
-  - `security`, `door`, `open_password`
+  - recommended local defaults:
+    - `scheme=https`
+    - `cgi_port=443`
+    - `username=adminapp2`
+    - `security=username`
+  - `device_password`
+    - local auth password used in the XML header
+    - on this device it is the 64-char auth code
+  - `door`
+    - usually `1`
+  - `lock_number`
+    - `1 = gâche`
+    - `2 = portail`
+  - `open_password`
+    - door unlock password used in the command content
+    - on this device it is the same 64-char auth code
   - `verify_ssl`
 - Optional down-channel listener:
   - `enable_downchannel`
@@ -31,15 +43,26 @@ This repository now contains:
 
 ### Entities and service
 
-- Button:
-  - `Open Door`
+- Buttons:
+  - `Open Latch`
+  - `Open Gate`
 - Sensors:
   - `Last Event Type`
   - `Last Unlock Method`
   - `Last Badge ID`
 - Service:
   - `welcomeeye.open_door`
-  - optional fields: `entry_id`, `door`
+  - optional fields: `entry_id`, `door`, `lock_number`
+
+### Local opening path
+
+The integration now tries the local XML API first:
+
+- `POST https://<device_host>:443/tdkcgi`
+- XML auth in the envelope header
+- no Android bridge required
+
+If that local path does not answer as expected, the integration keeps the previous digest path as a fallback.
 
 ### Badge unlock info
 
