@@ -8,5 +8,5 @@
   "issue_tracker": "https://github.com/titom43/welcomeeye-ha-workspace/issues",
   "loggers": ["custom_components.welcomeeye"],
   "requirements": [],
-  "version": "1.2.7"
+  "version": "1.2.8"
 }

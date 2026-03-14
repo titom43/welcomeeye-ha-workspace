@@ -360,25 +360,31 @@ class WelcomeEyeClient:
             "Accept": "*/*",
             "User-Agent": "okhttp/3.12.13",
         }
+for base in bases_to_try:
+    # Try regions 1 then 0
+    for region in [1, 0]:
+        temp_config[CONF_IP_REGION_ID] = region
+        payload = _build_login_xml(temp_config)
+        url = f"{base.rstrip('/')}{path}"
+        _LOGGER.debug("Attempting cloud login on %s (Region %s)", url, region)
+        try:
+            resp = await self._request("POST", url, data=payload, headers=headers, timeout=10)
+            body = await resp.text()
+            if resp.status != 200: continue
 
-        for base in bases_to_try:
-            url = f"{base.rstrip('/')}{path}"
-            _LOGGER.debug("Attempting cloud login on %s", url)
             try:
-                resp = await self._request("POST", url, data=payload, headers=headers, timeout=10)
-                body = await resp.text()
-                if resp.status != 200: continue
-                
-                try:
-                    root = ET.fromstring(body)
-                except ET.ParseError: continue
-                
-                res = root.findtext("./header/result")
-                if res != "0":
-                    _LOGGER.info("Cloud login rejected by %s (Error %s)", base, res)
-                    continue
+                root = ET.fromstring(body)
+            except ET.ParseError: continue
 
-                self._cookies.clear()
+            res = root.findtext("./header/result")
+            if res != "0":
+                _LOGGER.info("Cloud login rejected by %s (Region %s, Result %s)", base, region, res)
+                continue
+
+            # Success!
+            self._cookies.clear()
+...
+
                 for cookie in resp.cookies.values(): self._cookies[cookie.key] = cookie.value
                 self._auth_session_id = root.findtext("./header/session/id") or root.findtext("./header/session")
                 content = root.find("./content")
