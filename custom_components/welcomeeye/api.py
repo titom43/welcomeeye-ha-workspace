@@ -492,6 +492,7 @@ class WelcomeEyeClient:
             "Accept": "*/*",
             "User-Agent": "okhttp/3.12.13",
             "Accept-Encoding": "gzip",
+            "Accept-Language": "fr-FR",
             "Connection": "Keep-Alive",
         }
 
@@ -550,6 +551,7 @@ class WelcomeEyeClient:
             "Accept": "*/*",
             "User-Agent": "okhttp/3.12.13",
             "Accept-Encoding": "gzip",
+            "Accept-Language": "fr-FR",
             "Connection": "Keep-Alive",
         }
         if self._cookies:
@@ -599,6 +601,7 @@ class WelcomeEyeClient:
             "Accept": "*/*",
             "User-Agent": "okhttp/3.12.13",
             "Accept-Encoding": "gzip",
+            "Accept-Language": "fr-FR",
             "Connection": "Keep-Alive",
         }
         if self._cookies:
