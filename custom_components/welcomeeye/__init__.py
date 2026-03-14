@@ -1,28 +1,29 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, ServiceCall
-from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
-
-from .api import WelcomeEyeClient
 from homeassistant.const import (
     CONF_DOOR,
     CONF_LOCK_NUMBER,
     EVENT_HOMEASSISTANT_STARTED,
     Platform,
 )
+from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
 from .const import (
     DATA_RUNTIME,
     DATA_SERVICE_REGISTERED,
     DOMAIN,
     SERVICE_OPEN_DOOR,
 )
-from .coordinator import WelcomeEyeRuntime
+
+_LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [Platform.BUTTON, Platform.SENSOR, Platform.BINARY_SENSOR]
 
@@ -34,22 +35,20 @@ async def _async_register_services(hass: HomeAssistant) -> None:
     async def _handle_open_door(call: ServiceCall) -> None:
         entry_id = call.data.get("entry_id")
         if not entry_id:
-            # If only one entry exists, allow implicit target.
             runtimes = hass.data[DATA_RUNTIME]
             if len(runtimes) == 1:
                 entry_id = next(iter(runtimes))
-        runtime: WelcomeEyeRuntime | None = hass.data[DATA_RUNTIME].get(entry_id)
+        
+        runtime = hass.data[DATA_RUNTIME].get(entry_id)
         if not runtime:
-            raise HomeAssistantError("No matching WelcomeEye config entry for this service call.")
+            raise HomeAssistantError("No matching WelcomeEye config entry.")
 
         result = await runtime.async_open_door(
             door=call.data.get(CONF_DOOR),
             lock_number=call.data.get(CONF_LOCK_NUMBER),
         )
         if not result.get("ok"):
-            raise HomeAssistantError(
-                f"Open door failed via {result.get('method')}: HTTP {result.get('http_status')} CGI error {result.get('cgi_error')}"
-            )
+            raise HomeAssistantError(f"Open door failed: {result.get('cgi_error')}")
 
     hass.services.async_register(
         DOMAIN,
@@ -67,6 +66,10 @@ async def _async_register_services(hass: HomeAssistant) -> None:
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    # Deferred imports to avoid blocking startup
+    from .api import WelcomeEyeClient
+    from .coordinator import WelcomeEyeRuntime
+
     hass.data.setdefault(DOMAIN, {})
     hass.data.setdefault(DATA_RUNTIME, {})
 
@@ -89,13 +92,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    runtime: WelcomeEyeRuntime = hass.data[DATA_RUNTIME][entry.entry_id]
+    runtime = hass.data[DATA_RUNTIME][entry.entry_id]
     await runtime.async_stop()
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unloaded:
         hass.data[DATA_RUNTIME].pop(entry.entry_id, None)
     return unloaded
-
-
-async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    return True
