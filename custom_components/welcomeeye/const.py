@@ -1,7 +1,7 @@
 from homeassistant.const import Platform
 
 DOMAIN = "welcomeeye"
-PLATFORMS: list[Platform] = [Platform.BUTTON, Platform.SENSOR, Platform.LOCK, Platform.BINARY_SENSOR]
+PLATFORMS: list[Platform] = [Platform.BUTTON, Platform.SENSOR, Platform.BINARY_SENSOR]
 
 CONF_NAME = "name"
 CONF_DEVICE_HOST = "device_host"
