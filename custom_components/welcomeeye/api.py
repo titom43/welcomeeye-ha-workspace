@@ -359,9 +359,6 @@ class WelcomeEyeClient:
             "Content-Type": "application/xml;charset=utf-8",
             "Accept": "*/*",
             "User-Agent": "okhttp/3.12.13",
-            "Accept-Encoding": "gzip",
-            "Accept-Language": "fr-FR",
-            "Connection": "Keep-Alive",
         }
 
         for base in bases_to_try:
@@ -408,9 +405,6 @@ class WelcomeEyeClient:
             "Content-Type": "application/xml;charset=utf-8",
             "Accept": "*/*",
             "User-Agent": "okhttp/3.12.13",
-            "Accept-Encoding": "gzip",
-            "Accept-Language": "fr-FR",
-            "Connection": "Keep-Alive",
         }
         if self._cookies: headers["Cookie"] = "; ".join(f"{k}={v}" for k, v in self._cookies.items())
         for candidate in candidates:
@@ -438,9 +432,6 @@ class WelcomeEyeClient:
             "Content-Type": "application/xml;charset=utf-8",
             "Accept": "*/*",
             "User-Agent": "okhttp/3.12.13",
-            "Accept-Encoding": "gzip",
-            "Accept-Language": "fr-FR",
-            "Connection": "Keep-Alive",
         }
         if self._cookies: headers["Cookie"] = "; ".join(f"{k}={v}" for k, v in self._cookies.items())
         session_id = self._alarm_session_id or self._auth_session_id or ""
