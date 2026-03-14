@@ -14,8 +14,8 @@
 - **Cloud Watcher**: Monitor events (doorbell rings, badge unlocks, app unlocks) via a robust polling mechanism.
 - **Dedicated Entities**: 
     - Binary Sensor for the doorbell.
-    - Buttons for opening latch and gate.
-    - Sensor for the last event type, unlock method, and badge ID.
+    - Buttons and Locks for opening latch and gate.
+    - Sensors for the last event type, unlock method, and badge ID.
     - Manual refresh button to trigger an instant event check.
 
 ## Installation
@@ -29,29 +29,37 @@
 
 ## Configuration
 
-The setup is simplified to the essentials:
+The integration supports three modes of operation:
 
+### 1. Hybrid Mode (Recommended)
+Fill in both Local and Cloud information to get full control and real-time monitoring.
+
+### 2. Local-only Mode
+Provide only the **Intercom IP** and **Local Code**.
+- ✅ Open latch and gate.
+- ❌ No doorbell or badge event monitoring.
+
+### 3. Cloud-only (Watcher) Mode
+Provide only the **Cloud Email**, **Password**, and **Intercom ID (CID)**.
+- ✅ Doorbell and badge event monitoring.
+- ❌ Cannot open doors (requires local network access).
+
+### Fields detail:
 - **Intercom IP**: Local IP address of your monitor.
 - **Local Code**: The 6-digit code you configured on the monitor screen.
-- **Cloud Email & Password**: Your Philips WelcomeEye app credentials (optional, enables the Watcher).
+- **Cloud Email & Password**: Your Philips WelcomeEye app credentials.
 - **Intercom ID / CID**: The unique ID of your intercom (found in the app settings, e.g., `2502uvs...`).
 - **Poll Frequency**: How often to check for events (in minutes, set to 0 to disable automatic polling).
 
 ## Entities
 
 - **Binary Sensor**: `Doorbell` (turns on for 10 seconds when someone rings).
-- **Button**: `Open Latch` (Gâche).
-- **Button**: `Open Gate` (Portail).
+- **Button / Lock**: `Open Latch` (Gâche).
+- **Button / Lock**: `Open Gate` (Portail).
 - **Button**: `Refresh Events` (Manual poll).
 - **Sensor**: `Last Event Type`.
 - **Sensor**: `Last Unlock Method`.
 - **Sensor**: `Last Badge ID`.
-
-## Notes
-
-- Opening is done locally via the XML API on `/tdkcgi`.
-- Event monitoring (Watcher) requires cloud credentials and uses a polling strategy for better stability than long-polling.
-- The integration is designed to be 100% focused on Home Assistant needs, keeping technical complexity hidden.
 
 ## Support
 

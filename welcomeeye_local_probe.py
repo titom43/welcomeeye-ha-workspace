@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import ssl
 import sys
 import xml.etree.ElementTree as ET
@@ -11,6 +12,13 @@ import http.client
 
 def now_xml() -> str:
     return datetime.now(timezone.utc).strftime('%Y-%m-%dt%H:%M:%Sz')
+
+
+def encode_device_password(value: str) -> str:
+    raw = (value or '').strip()
+    if len(raw) >= 64:
+        return raw
+    return hashlib.sha256(raw.encode('utf-8')).hexdigest()
 
 
 def build_header(username: str, password: str, security: str = 'username', passwordencode: str = '1') -> str:
@@ -115,8 +123,8 @@ def main() -> int:
     p.add_argument('--host', required=True)
     p.add_argument('--port', type=int, default=443)
     p.add_argument('--username', default='adminapp2')
-    p.add_argument('--password', required=True, help='Encoded local auth password (authCode SHA-256)')
-    p.add_argument('--unlock-password', default=None, help='Unlock password for set.device.opendoor, defaults to --password')
+    p.add_argument('--password', required=True, help='Local auth password, raw or already SHA-256 encoded')
+    p.add_argument('--unlock-password', default=None, help='Unlock password, raw or already SHA-256 encoded; defaults to --password')
     p.add_argument('--probe', required=True, choices=['device-status', 'live-status', 'system-status', 'record-alarm', 'record-session', 'record-message', 'unlock-gache', 'unlock-portail'])
     p.add_argument('--channel', type=int, default=1)
     p.add_argument('--timestamp', default=None)
@@ -124,7 +132,8 @@ def main() -> int:
     p.add_argument('--record-id', default=None)
     args = p.parse_args()
 
-    unlock_password = args.unlock_password or args.password
+    encoded_password = encode_device_password(args.password)
+    unlock_password = encode_device_password(args.unlock_password or args.password)
     ts = args.timestamp or now_xml()
 
     if args.probe == 'device-status':
@@ -149,7 +158,7 @@ def main() -> int:
     else:
         raise SystemExit('unsupported probe')
 
-    xml = build_envelope(command, content, args.username, args.password)
+    xml = build_envelope(command, content, args.username, encoded_password)
     print('=== REQUEST ===')
     print(xml)
     print()

@@ -17,7 +17,8 @@
     },
     "error": {
       "required": "Ce champ est requis.",
-      "auth_credentials_required": "L'email et le mot de passe cloud sont requis pour activer le Watcher."
+      "auth_credentials_required": "L'email et le mot de passe cloud sont requis pour activer le Watcher.",
+      "missing_configuration_mode": "Vous devez fournir soit les infos locales (IP + Code), soit les infos cloud (Email + Pass + CID) pour continuer."
     }
   },
   "entity": {

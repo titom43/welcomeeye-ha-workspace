@@ -8,11 +8,14 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import CONF_NAME
+from .const import CONF_NAME, CONF_DEVICE_HOST
 from .coordinator import get_runtime
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
+    if not entry.data.get(CONF_DEVICE_HOST):
+        return
+
     runtime = get_runtime(hass, entry.entry_id)
     async_add_entities(
         [
@@ -29,7 +32,7 @@ class WelcomeEyeLock(LockEntity):
         self._entry = entry
         self._runtime = runtime
         self._lock_number = lock_number
-        self._attr_name = name
+        self._attr_translation_key = "open_latch" if lock_number == 1 else "open_gate"
         self._attr_icon = icon
         self._attr_unique_id = f"{entry.entry_id}_lock_{suffix}"
         self._attr_device_info = {

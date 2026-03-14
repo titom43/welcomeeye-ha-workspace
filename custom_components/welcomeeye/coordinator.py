@@ -31,6 +31,12 @@ class WelcomeEyeRuntime:
     async def async_start(self) -> None:
         if self._alarm_task and not self._alarm_task.done():
             return
+        
+        # Don't start polling if cloud info is missing
+        if not self.config.get(CONF_AUTH_ACCOUNT) or not self.config.get(CONF_AUTH_PASSWORD):
+            _LOGGER.info("Cloud Watcher disabled: missing credentials")
+            return
+
         self._stop.clear()
         self._alarm_task = self.hass.async_create_task(self._run_alarm_poll(), name=f"welcomeeye_alarm_{self.entry_id}")
 

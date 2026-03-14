@@ -20,6 +20,13 @@ def md5_hex(s: str) -> str:
     return hashlib.md5(s.encode("utf-8")).hexdigest()
 
 
+def encode_device_password(value: str) -> str:
+    raw = (value or "").strip()
+    if len(raw) >= 64:
+        return raw
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
 def parse_www_authenticate(header_value: str) -> Dict[str, str]:
     # Accept both "Digest realm=..." and fragments split by commas.
     v = (header_value or "").strip()
@@ -139,21 +146,24 @@ def main() -> int:
     p.add_argument("--insecure", action="store_true", help="Disable TLS verification (https only)")
 
     p.add_argument("--username", required=True, help="Device CGI username")
-    p.add_argument("--device-password", required=True, help="Device CGI password")
+    p.add_argument("--device-password", required=True, help="Device CGI password, raw or already SHA-256 encoded")
     p.add_argument("--data-encode-key", default="", help="Needed for non-HS digest formula")
     p.add_argument("--hs-device", action="store_true", help="Use HS digest formula username:realm:password")
     p.add_argument("--security", default="username", help="Header security value (default: username)")
 
     p.add_argument("--door", type=int, default=1, help="Latch index")
-    p.add_argument("--open-password", default="", help="Open password in content/password")
+    p.add_argument("--open-password", default="", help="Open password, raw or already SHA-256 encoded; defaults to --device-password")
     p.add_argument("--dry-run", action="store_true", help="Print XML only")
     args = p.parse_args()
 
+    encoded_device_password = encode_device_password(args.device_password)
+    encoded_open_password = encode_device_password(args.open_password or args.device_password)
+
     xml = build_open_door_xml(
         username=args.username,
-        device_password=args.device_password,
+        device_password=encoded_device_password,
         door=args.door,
-        open_password=args.open_password,
+        open_password=encoded_open_password,
         security=args.security,
     )
     print("=== XML command ===")
@@ -176,11 +186,15 @@ def main() -> int:
     try:
         st1, h1, b1 = request(conn, path=args.path, body=xml, authorization="")
         print(f"=== First response: HTTP {st1} ===")
+        print("=== First response headers ===")
+        for k, v in h1.items():
+            print(f"{k}: {v}")
+        print()
         print(b1[:1200])
         print()
 
-        if st1 != 401:
-            err = parse_cgi_error(b1)
+        err = parse_cgi_error(b1)
+        if st1 != 401 and err != "401":
             if st1 == 200 and err == "0":
                 print("Door command accepted (error=0).")
                 return 0
@@ -190,7 +204,7 @@ def main() -> int:
         challenge = parse_www_authenticate(h1.get("WWW-Authenticate", ""))
         auth = build_digest_auth(
             username=args.username,
-            password=args.device_password,
+            password=encoded_device_password,
             data_encode_key=args.data_encode_key,
             challenge=challenge,
             is_hs_device=args.hs_device,

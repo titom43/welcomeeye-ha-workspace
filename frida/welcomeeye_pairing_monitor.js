@@ -47,6 +47,21 @@ function qvDeviceSnapshot(dev) {
 Java.perform(function () {
   log('script', 'welcomeeye_pairing_monitor loaded');
 
+  function qvUserSnapshot(user) {
+    if (!user) return null;
+    return {
+      className: safe(function () { return user.$className; }, null),
+      account: safe(function () { return String(user.getAccount()); }, null),
+      email: safe(function () { return String(user.getEmail()); }, null),
+      mobile: safe(function () { return String(user.getMobile()); }, null),
+      nick: safe(function () { return String(user.getNick()); }, null),
+      realName: safe(function () { return String(user.getRealName()); }, null),
+      authCode: safe(function () { return String(user.getAuthCode()); }, null),
+      pwd: safe(function () { return String(user.getPwd()); }, null),
+      upgradeFromGuest: safe(function () { return user.getUpgradeFromGuest(); }, null)
+    };
+  }
+
   var QvDevice = null;
   try {
     QvDevice = Java.use('com.quvii.publico.entity.QvDevice');
@@ -157,6 +172,83 @@ Java.perform(function () {
   }
 
   try {
+    var QvOpenSDK = Java.use('com.quvii.openapi.QvOpenSDK');
+
+    QvOpenSDK.accountRegisterSendVerifyCode.overload(
+      'java.lang.String',
+      'com.quvii.publico.common.SimpleLoadListener'
+    ).implementation = function (account, listener) {
+      log('signup.send_register_code.phone', {
+        account: String(account)
+      });
+      return this.accountRegisterSendVerifyCode(account, listener);
+    };
+
+    QvOpenSDK.accountRegisterSendEmailVerifyCode.overload(
+      'java.lang.String',
+      'com.quvii.publico.common.SimpleLoadListener'
+    ).implementation = function (account, listener) {
+      log('signup.send_register_code.email', {
+        account: String(account)
+      });
+      return this.accountRegisterSendEmailVerifyCode(account, listener);
+    };
+
+    QvOpenSDK.accountRegisterByPhoneNum.overload(
+      'java.lang.String',
+      'java.lang.String',
+      'java.lang.String',
+      'java.lang.Integer',
+      'com.quvii.publico.common.SimpleLoadListener'
+    ).implementation = function (account, password, code, upgradeFromGuest, listener) {
+      log('signup.register.phone', {
+        account: String(account),
+        password: String(password),
+        authCode: String(code),
+        upgradeFromGuest: upgradeFromGuest ? Number(upgradeFromGuest) : null
+      });
+      return this.accountRegisterByPhoneNum(account, password, code, upgradeFromGuest, listener);
+    };
+
+    QvOpenSDK.accountRegisterByEmail.overload(
+      'java.lang.String',
+      'java.lang.String',
+      'java.lang.String',
+      'java.lang.String',
+      'java.lang.Integer',
+      'com.quvii.publico.common.SimpleLoadListener'
+    ).implementation = function (account, password, nick, code, upgradeFromGuest, listener) {
+      log('signup.register.email', {
+        account: String(account),
+        password: String(password),
+        nick: String(nick),
+        authCode: String(code),
+        upgradeFromGuest: upgradeFromGuest ? Number(upgradeFromGuest) : null
+      });
+      return this.accountRegisterByEmail(account, password, nick, code, upgradeFromGuest, listener);
+    };
+  } catch (e) {
+    log('warn', 'QvOpenSDK signup hooks unavailable: ' + e);
+  }
+
+  try {
+    var HttpUserAuthManager = Java.use('com.quvii.qvweb.userauth.HttpUserAuthManager');
+    HttpUserAuthManager.accountRegister.overload(
+      'com.quvii.qvweb.publico.entity.QvUser',
+      'int',
+      'com.quvii.qvweb.userauth.HttpUserAuthManager$OnConnectListener'
+    ).implementation = function (user, activeWay, listener) {
+      log('auth.accountRegister', {
+        activeWay: Number(activeWay),
+        user: qvUserSnapshot(user)
+      });
+      return this.accountRegister(user, activeWay, listener);
+    };
+  } catch (e) {
+    log('warn', 'HttpUserAuthManager accountRegister hook unavailable: ' + e);
+  }
+
+  try {
     var QvLocationManager = Java.use('com.quvii.qvweb.userauth.QvLocationManager');
     QvLocationManager.switchToTargetGroup.overload('int').implementation = function (groupId) {
       log('location.switchToTargetGroup', { groupId: Number(groupId) });
@@ -164,5 +256,54 @@ Java.perform(function () {
     };
   } catch (e) {
     log('warn', 'QvLocationManager hook unavailable: ' + e);
+  }
+
+  try {
+    var UserAuthRequestHelper = Java.use('com.quvii.qvweb.userauth.UserAuthRequestHelper');
+    UserAuthRequestHelper.getAccountRegisterReqBody.overload(
+      'com.quvii.qvweb.publico.entity.QvUser',
+      'java.lang.String'
+    ).implementation = function (user, activeWay) {
+      var ret = this.getAccountRegisterReqBody(user, activeWay);
+      log('request.account-register', {
+        activeWay: String(activeWay),
+        user: qvUserSnapshot(user),
+        requestBodyClass: safe(function () { return ret.$className; }, null)
+      });
+      return ret;
+    };
+
+    UserAuthRequestHelper.userAuthByPhone.overload(
+      'java.lang.String',
+      'java.lang.String'
+    ).implementation = function (phone, authType) {
+      var ret = this.userAuthByPhone(phone, authType);
+      log('request.send-register-code.phone', {
+        phone: String(phone),
+        authType: String(authType),
+        requestBodyClass: safe(function () { return ret.$className; }, null)
+      });
+      return ret;
+    };
+  } catch (e) {
+    log('warn', 'UserAuthRequestHelper signup request hooks unavailable: ' + e);
+  }
+
+  try {
+    var QvUserAuthCore = Java.use('com.quvii.core.QvUserAuthCore');
+    QvUserAuthCore.handleDownChannelResponse.overload('java.lang.String').implementation = function (payload) {
+      var text = String(payload);
+      if (
+        text.indexOf('account-register') >= 0 ||
+        text.indexOf('send-register-code') >= 0 ||
+        text.indexOf('register') >= 0 ||
+        text.indexOf('verify') >= 0
+      ) {
+        log('downchannel.signup.payload', text);
+      }
+      return this.handleDownChannelResponse(payload);
+    };
+  } catch (e) {
+    log('warn', 'QvUserAuthCore signup response hook unavailable: ' + e);
   }
 });

@@ -13,7 +13,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_call_later
 
-from .const import CONF_NAME, SIGNAL_EVENT
+from .const import CONF_NAME, SIGNAL_EVENT, CONF_AUTH_ACCOUNT
 from .coordinator import WelcomeEyeRuntime, get_runtime
 
 # Durée pendant laquelle le capteur de sonnette reste actif après un événement
@@ -21,6 +21,9 @@ RING_DURATION = 10
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
+    if not entry.data.get(CONF_AUTH_ACCOUNT):
+        return
+
     runtime = get_runtime(hass, entry.entry_id)
     async_add_entities([WelcomeEyeDoorbellSensor(entry, runtime)])
 

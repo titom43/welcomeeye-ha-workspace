@@ -8,11 +8,14 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import CONF_NAME, SIGNAL_EVENT
+from .const import CONF_NAME, SIGNAL_EVENT, CONF_AUTH_ACCOUNT
 from .coordinator import WelcomeEyeRuntime, get_runtime
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
+    if not entry.data.get(CONF_AUTH_ACCOUNT):
+        return
+
     runtime = get_runtime(hass, entry.entry_id)
     async_add_entities(
         [

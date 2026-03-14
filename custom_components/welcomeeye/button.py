@@ -5,19 +5,23 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import CONF_NAME
-from .coordinator import get_runtime
+from .const import CONF_NAME, CONF_DEVICE_HOST, CONF_AUTH_ACCOUNT
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     runtime = get_runtime(hass, entry.entry_id)
-    async_add_entities(
-        [
-            WelcomeEyeOpenLockButton(entry, runtime, lock_number=1, suffix="gache", name="Open Latch", icon="mdi:door-open"),
-            WelcomeEyeOpenLockButton(entry, runtime, lock_number=2, suffix="portail", name="Open Gate", icon="mdi:gate-open"),
-            WelcomeEyeRefreshButton(entry, runtime),
-        ]
-    )
+    entities = []
+    
+    # Local unlock buttons
+    if entry.data.get(CONF_DEVICE_HOST):
+        entities.append(WelcomeEyeOpenLockButton(entry, runtime, lock_number=1, suffix="gache", name="Open Latch", icon="mdi:door-open"))
+        entities.append(WelcomeEyeOpenLockButton(entry, runtime, lock_number=2, suffix="portail", name="Open Gate", icon="mdi:gate-open"))
+    
+    # Cloud refresh button
+    if entry.data.get(CONF_AUTH_ACCOUNT):
+        entities.append(WelcomeEyeRefreshButton(entry, runtime))
+        
+    async_add_entities(entities)
 
 
 class WelcomeEyeRefreshButton(ButtonEntity):

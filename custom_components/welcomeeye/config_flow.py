@@ -68,7 +68,7 @@ def _schema(defaults: dict[str, Any]) -> vol.Schema:
 def _validate(data: dict[str, Any]) -> dict[str, str]:
     errors: dict[str, str] = {}
     
-    # Fill in technical defaults if not present (internal use)
+    # Fill in technical defaults
     data.setdefault(CONF_CGI_PORT, DEFAULT_CGI_PORT)
     data.setdefault(CONF_SCHEME, DEFAULT_SCHEME)
     data.setdefault(CONF_USERNAME, "adminapp2")
@@ -84,13 +84,12 @@ def _validate(data: dict[str, Any]) -> dict[str, str]:
     data.setdefault(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
     data.setdefault(CONF_HS_DEVICE, True)
 
-    if not data.get(CONF_DEVICE_HOST):
-        errors[CONF_DEVICE_HOST] = "required"
+    has_local = bool(data.get(CONF_DEVICE_HOST) and data.get(CONF_DEVICE_PASSWORD))
+    has_cloud = bool(data.get(CONF_AUTH_ACCOUNT) and data.get(CONF_AUTH_PASSWORD) and data.get(CONF_AUTH_CODE))
+
+    if not has_local and not has_cloud:
+        errors["base"] = "missing_configuration_mode"
     
-    # If cloud email is provided, password and CID are recommended
-    if data.get(CONF_AUTH_ACCOUNT):
-        if not data.get(CONF_AUTH_PASSWORD):
-            errors[CONF_AUTH_PASSWORD] = "required"
     return errors
 
 

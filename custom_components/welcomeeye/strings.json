@@ -17,7 +17,8 @@
     },
     "error": {
       "required": "This field is required.",
-      "auth_credentials_required": "Cloud email and password are required to enable the Watcher."
+      "auth_credentials_required": "Cloud email and password are required to enable the Watcher.",
+      "missing_configuration_mode": "You must provide either Local info (IP + Code) or Cloud info (Email + Password + CID) to proceed."
     }
   },
   "entity": {
