@@ -108,21 +108,21 @@ def _build_login_xml(config: dict[str, Any]) -> str:
         "<envelope>"
         "<header>"
         "<flag>tdkcloud</flag>"
-        f"<version>{config.get('version', 'v1.13')}</version>"
+        "<version>v1.13</version>"
         "<command>login</command>"
         "<seq>0</seq>"
         "<session></session>"
         "<user-data></user-data>"
         "<client>"
-        f"<id>{config.get('client_id', 'ha-welcomeeye')}</id>"
+        "<id>ha-welcomeeye</id>"
         "<type>3</type>"
-        f"<oem>{config.get('oem_id', 'G0123,A0058,G0058')}</oem>"
-        f"<app>{config.get('app_id', 4123)}</app>"
+        "<oem>G0123,A0058,G0058</oem>"
+        "<app>4123</app>"
         "</client>"
         "</header>"
         "<content>"
-        f"<account>{config[CONF_AUTH_ACCOUNT]}</account>"
-        f"<password>{config[CONF_AUTH_PASSWORD]}</password>"
+        f"<account>{config.get(CONF_AUTH_ACCOUNT, '')}</account>"
+        f"<password>{config.get(CONF_AUTH_PASSWORD, '')}</password>"
         f"<auth-type>{config.get(CONF_AUTH_TYPE, 0)}</auth-type>"
         f"<auth-code>{config.get(CONF_AUTH_CODE, '')}</auth-code>"
         f"<ip-region-id>{config.get(CONF_IP_REGION_ID, 0)}</ip-region-id>"
@@ -285,35 +285,6 @@ def _parse_cgi_error(xml_body: str) -> str | None:
     if err is None:
         return None
     return err.strip()
-
-
-def _build_login_xml(config: dict[str, Any]) -> str:
-    return (
-        '<?xml version="1.0" encoding="UTF-8"?>'
-        "<envelope>"
-        "<header>"
-        "<flag>tdkcloud</flag>"
-        "<version>v1.13</version>"
-        "<command>login</command>"
-        "<seq>0</seq>"
-        "<session></session>"
-        "<user-data></user-data>"
-        "<client>"
-        "<id>ha-welcomeeye</id>"
-        "<type>3</type>"
-        "<oem>G0123,A0058,G0058</oem>"
-        "<app>4123</app>"
-        "</client>"
-        "</header>"
-        "<content>"
-        f"<account>{config.get(CONF_AUTH_ACCOUNT, '')}</account>"
-        f"<password>{config.get(CONF_AUTH_PASSWORD, '')}</password>"
-        f"<auth-type>{config.get(CONF_AUTH_TYPE, 0)}</auth-type>"
-        f"<auth-code>{config.get(CONF_AUTH_CODE, '')}</auth-code>"
-        f"<ip-region-id>{config.get(CONF_IP_REGION_ID, 0)}</ip-region-id>"
-        "</content>"
-        "</envelope>"
-    )
 
 
 class WelcomeEyeClient:
