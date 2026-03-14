@@ -27,6 +27,7 @@ class WelcomeEyeRuntime:
         self.last_event: dict[str, Any] | None = None
         self.last_open_result: dict[str, Any] | None = None
         self._last_alarm_id: str | None = None
+        self._last_time: str | None = None
 
     async def async_start(self) -> None:
         if self._alarm_task and not self._alarm_task.done():
@@ -34,7 +35,7 @@ class WelcomeEyeRuntime:
         
         # Don't start polling if cloud info is missing
         if not self.config.get(CONF_AUTH_ACCOUNT) or not self.config.get(CONF_AUTH_PASSWORD):
-            _LOGGER.info("Cloud Watcher disabled: missing credentials")
+            _LOGGER.info("Cloud Watcher disabled: missing credentials for %s", self.entry_id)
             return
 
         self._stop.clear()
@@ -53,7 +54,7 @@ class WelcomeEyeRuntime:
 
     async def async_refresh(self) -> None:
         """Trigger a manual poll."""
-        _LOGGER.debug("Manual refresh requested")
+        _LOGGER.info("Manual refresh requested for WelcomeEye Door Connect")
         self._refresh_event.set()
 
     async def async_open_door(self, door: int | None = None, lock_number: int | None = None) -> dict[str, Any]:
@@ -75,33 +76,37 @@ class WelcomeEyeRuntime:
         return result
 
     async def _run_alarm_poll(self) -> None:
-        _LOGGER.debug("Starting alarm poll loop for %s", self.entry_id)
-        
-        # We don't mark as initialized yet, we want the first successful poll to do it
+        _LOGGER.info("Starting WelcomeEye Door Connect event watcher")
         initialized = False
 
         while not self._stop.is_set():
             try:
-                # 1. Ensure we are logged in
+                # 1. Ensure we have a session
                 if not self.client._auth_session_id:
-                    _LOGGER.debug("No session ID, performing cloud login...")
+                    _LOGGER.debug("No cloud session, logging in...")
                     if await self.client.login_auth():
                         await self.client.login_alarm()
                     else:
-                        _LOGGER.warning("Cloud login failed, will retry in 60s")
+                        _LOGGER.warning("Cloud login failed, retrying in 60s")
                         await asyncio.sleep(60)
                         continue
 
-                # 2. Query the alarm list
-                _LOGGER.debug("Polling cloud events...")
+                # 2. Query alarm list
+                _LOGGER.debug("Polling cloud alarm list...")
                 items = await self.client.query_alarm_list(page_num=0, page_line_num=15)
                 
                 if not items:
-                    _LOGGER.debug("Alarm list empty, checking session validity...")
-                    # Possible expired session
+                    _LOGGER.debug("No items returned, checking session...")
+                    # Try one re-login if empty, could be expired session
                     if await self.client.login_auth():
                         await self.client.login_alarm()
-                    await asyncio.sleep(30)
+                    
+                    # Small wait to avoid spinning
+                    try:
+                        await asyncio.wait_for(self._refresh_event.wait(), timeout=30)
+                        self._refresh_event.clear()
+                    except asyncio.TimeoutError:
+                        pass
                     continue
 
                 latest = items[0]
@@ -109,37 +114,43 @@ class WelcomeEyeRuntime:
                 latest_time = latest.get("time")
                 
                 is_manual = self._refresh_event.is_set()
-                has_changed = (latest_id != self._last_alarm_id) or (latest_time != self.config.get("_last_time"))
+                has_changed = (latest_id != self._last_alarm_id) or (latest_time != self._last_time)
                 
                 if not initialized or has_changed or is_manual:
                     self._last_alarm_id = latest_id
-                    self.config["_last_time"] = latest_time
+                    self._last_time = latest_time
                     parsed = parse_alarm_history_item(latest)
                     self.last_event = parsed
                     
-                    _LOGGER.info("Event detected (new=%s, manual=%s): %s", has_changed, is_manual, parsed.get("event_type"))
+                    _LOGGER.info("WelcomeEye Event: %s (Method: %s, Badge: %s)", 
+                                 parsed.get("event_type"), 
+                                 parsed.get("unlock_method"),
+                                 parsed.get("badge_id"))
+                                 
                     async_dispatcher_send(self.hass, SIGNAL_EVENT.format(entry_id=self.entry_id))
                     initialized = True
 
                 self._refresh_event.clear()
                 
-                # 3. Wait logic
+                # 3. Wait for next poll or manual refresh
                 poll_min = self.config.get(CONF_POLL_INTERVAL_MIN, 5)
                 if poll_min > 0:
                     wait_sec = poll_min * 60
-                    _LOGGER.debug("Waiting %s seconds for next scheduled poll", wait_sec)
                     try:
                         await asyncio.wait_for(self._refresh_event.wait(), timeout=wait_sec)
+                        self._refresh_event.clear()
+                        _LOGGER.debug("Unblocked by refresh event")
                     except asyncio.TimeoutError:
                         pass
                 else:
-                    _LOGGER.debug("Automatic polling disabled (0), waiting for manual refresh button")
+                    _LOGGER.debug("Polling min is 0, waiting for manual refresh")
                     await self._refresh_event.wait()
+                    self._refresh_event.clear()
 
             except asyncio.CancelledError:
                 raise
             except Exception as exc:  # noqa: BLE001
-                _LOGGER.exception("Unexpected error in poll loop: %s", exc)
+                _LOGGER.exception("Unexpected error in WelcomeEye poll loop: %s", exc)
                 await asyncio.sleep(60)
 
 
