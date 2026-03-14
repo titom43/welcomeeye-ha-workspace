@@ -3,14 +3,14 @@
     "step": {
       "user": {
         "title": "WelcomeEye",
-        "description": "Configurez l'accès local pour la serrure et l'accès cloud pour les événements.",
+        "description": "Configurez l'accès local pour la serrure et l'accès cloud optionnel pour les événements.",
         "data": {
           "name": "Nom de l'intégration",
           "device_host": "IP du portier (ex: 192.168.1.50)",
           "device_password": "Code local (6 chiffres écran)",
           "auth_account": "Email Cloud (optionnel)",
           "auth_password": "Mot de passe Cloud",
-          "auth_code": "ID Interphone / CID",
+          "auth_code": "UID Interphone (Optionnel)",
           "poll_interval_min": "Fréquence de polling (min, 0=jamais)"
         }
       }
@@ -18,7 +18,7 @@
     "error": {
       "required": "Ce champ est requis.",
       "auth_credentials_required": "L'email et le mot de passe cloud sont requis pour activer le Watcher.",
-      "missing_configuration_mode": "Vous devez fournir soit les infos locales (IP + Code), soit les infos cloud (Email + Pass + CID) pour continuer."
+      "missing_configuration_mode": "Vous devez fournir soit les infos locales (IP + Code), soit les infos cloud (Email + Pass) pour continuer."
     }
   },
   "entity": {

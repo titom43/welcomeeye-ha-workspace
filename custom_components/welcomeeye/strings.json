@@ -10,7 +10,7 @@
           "device_password": "Local code (6 digits from screen)",
           "auth_account": "Cloud Email (optional)",
           "auth_password": "Cloud Password",
-          "auth_code": "Intercom ID / CID",
+          "auth_code": "Intercom UID (Optional)",
           "poll_interval_min": "Poll frequency (min, 0=never)"
         }
       }
@@ -18,7 +18,7 @@
     "error": {
       "required": "This field is required.",
       "auth_credentials_required": "Cloud email and password are required to enable the Watcher.",
-      "missing_configuration_mode": "You must provide either Local info (IP + Code) or Cloud info (Email + Password + CID) to proceed."
+      "missing_configuration_mode": "You must provide either Local info (IP + Code) or Cloud info (Email + Password) to proceed."
     }
   },
   "entity": {

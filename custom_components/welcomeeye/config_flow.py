@@ -78,7 +78,7 @@ def _validate(data: dict[str, Any]) -> dict[str, str]:
     data.setdefault(CONF_HS_DEVICE, True)
 
     has_local = bool(data.get(CONF_DEVICE_HOST) and data.get(CONF_DEVICE_PASSWORD))
-    has_cloud = bool(data.get(CONF_AUTH_ACCOUNT) and data.get(CONF_AUTH_PASSWORD) and data.get(CONF_AUTH_CODE))
+    has_cloud = bool(data.get(CONF_AUTH_ACCOUNT) and data.get(CONF_AUTH_PASSWORD))
 
     if not has_local and not has_cloud:
         errors["base"] = "missing_configuration_mode"

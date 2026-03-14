@@ -167,13 +167,16 @@ def _build_alarm_login_xml(
     )
 
 
-def _build_alarm_list_xml(session_id: str, page_num: int = 0, page_line_num: int = 15, max_id: str = "0") -> str:
+def _build_alarm_list_xml(config: dict[str, Any], session_id: str, page_num: int = 0, page_line_num: int = 15, max_id: str = "0") -> str:
+    uid = config.get(CONF_AUTH_CODE, "")
+    devid_xml = f"<devid><id>{uid}</id></devid>" if uid else "<devid><id></id></devid>"
+    
     return (
         '<?xml version="1.0" encoding="UTF-8"?>'
         "<envelope>"
         '<content class="com.quvii.qvweb.Alarm.bean.request.AlarmListQueryReqContent">'
         "<filter>"
-        "<devid><id></id></devid>"
+        f"{devid_xml}"
         "<event><type></type></event>"
         "<peroid/>"
         "</filter>"
@@ -555,7 +558,7 @@ class WelcomeEyeClient:
             headers["Cookie"] = "; ".join(f"{k}={v}" for k, v in self._cookies.items())
         
         session_id = self._alarm_session_id or self._auth_session_id or ""
-        payload = _build_alarm_list_xml(session_id, page_num=page_num, page_line_num=page_line_num, max_id=max_id)
+        payload = _build_alarm_list_xml(self._config, session_id, page_num=page_num, page_line_num=page_line_num, max_id=max_id)
         
         try:
             resp = await self._request("POST", url, data=payload, headers=headers, timeout=15)
