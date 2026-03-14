@@ -10,6 +10,7 @@ from aiohttp import ClientResponse, ClientSession
 
 from .const import (
     AUTH_MODES,
+    CONF_ALARM_BASE_URL,
     CONF_AUTH_ACCOUNT,
     CONF_AUTH_BASE_URL,
     CONF_AUTH_CODE,
@@ -207,6 +208,7 @@ class WelcomeEyeClient:
         self._session = session
         self._config = config
         self._cookies: dict[str, str] = {}
+        self._auth_session_id: str | None = None
 
     @property
     def _ssl(self) -> bool:
@@ -227,6 +229,27 @@ class WelcomeEyeClient:
         if not parsed.scheme:
             return None
         return raw.rstrip("/")
+
+    def _alarm_base(self) -> str | None:
+        explicit = (self._config.get(CONF_ALARM_BASE_URL) or "").strip()
+        if explicit:
+            return explicit.rstrip("/")
+
+        auth_base = self._auth_base()
+        if not auth_base:
+            return None
+
+        parsed = urlparse(auth_base)
+        if not parsed.scheme or not parsed.hostname:
+            return None
+
+        host = parsed.hostname
+        host_match = re.match(r"^(shi-)(\d+)(-sec\.qvcloud\.net)$", host)
+        if host_match:
+            host = f"{host_match.group(1)}{int(host_match.group(2)) + 1}{host_match.group(3)}"
+            return f"{parsed.scheme}://{host}:4443/UserAlarm"
+
+        return None
 
     async def _request(
         self,
@@ -332,7 +355,93 @@ class WelcomeEyeClient:
         self._cookies.clear()
         for cookie in resp.cookies.values():
             self._cookies[cookie.key] = cookie.value
+        self._auth_session_id = self._parse_auth_session_id(body)
         return True
+
+    def _parse_auth_session_id(self, body: str) -> str | None:
+        try:
+            root = ET.fromstring(body)
+        except ET.ParseError:
+            return None
+        session_id = root.findtext("./header/session/id")
+        if session_id:
+            return session_id.strip()
+        session_text = root.findtext("./header/session")
+        if session_text:
+            return session_text.strip()
+        return None
+
+    def _build_alarm_list_xml(self, *, page_num: int = 0, page_line_num: int = 15, max_id: str = "") -> str:
+        session_xml = f"<session>{self._auth_session_id}</session>" if self._auth_session_id else "<session></session>"
+        filter_xml = ""
+        configured_device_id = self._config.get("device_uid") or self._config.get("device_cid")
+        if configured_device_id:
+            filter_xml = (
+                "<filter>"
+                "<devid>"
+                f"<id>{configured_device_id}</id>"
+                "</devid>"
+                "</filter>"
+            )
+        return (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            "<envelope>"
+            "<header>"
+            "<flag>tdkcloud</flag>"
+            f"{session_xml}"
+            "<command>client-query-recordlist</command>"
+            "<seq>0</seq>"
+            "</header>"
+            "<content>"
+            f"<maxid>{max_id}</maxid>"
+            f"<pageno>{page_num}</pageno>"
+            f"<pagelinenum>{page_line_num}</pagelinenum>"
+            f"{filter_xml}"
+            "</content>"
+            "</envelope>"
+        )
+
+    async def query_alarm_list(self, *, page_num: int = 0, page_line_num: int = 15, max_id: str = "") -> list[dict[str, Any]]:
+        base = self._alarm_base()
+        if not base:
+            return []
+        headers = {"Content-Type": "application/xml;charset=utf-8", "Accept": "*/*"}
+        if self._cookies:
+            headers["Cookie"] = "; ".join(f"{k}={v}" for k, v in self._cookies.items())
+        payload = self._build_alarm_list_xml(page_num=page_num, page_line_num=page_line_num, max_id=max_id)
+        resp = await self._request("POST", base, data=payload, headers=headers, timeout=15)
+        body = await resp.text()
+        if resp.status != 200:
+            _LOGGER.debug("Alarm list query failed status=%s body=%s", resp.status, body[:300])
+            return []
+        return self._parse_alarm_list_response(body)
+
+    def _parse_alarm_list_response(self, body: str) -> list[dict[str, Any]]:
+        try:
+            root = ET.fromstring(body)
+        except ET.ParseError:
+            return []
+        result = root.findtext("./header/result")
+        if result not in (None, "", "0"):
+            return []
+        items: list[dict[str, Any]] = []
+        for node in root.findall(".//record/alarmList/data"):
+            items.append(
+                {
+                    "id": (node.findtext("id") or "").strip(),
+                    "alarmid": (node.findtext("alarmid") or "").strip(),
+                    "devid": (node.findtext("devid") or "").strip(),
+                    "event": (node.findtext("event") or "").strip(),
+                    "alarmstate": (node.findtext("alarmstate") or "").strip(),
+                    "alarminfo": (node.findtext("alarminfo") or "").strip(),
+                    "alarmsource": (node.findtext("alarmsource") or "").strip(),
+                    "alarmsourcename": (node.findtext("alarmsourcename") or "").strip(),
+                    "time": (node.findtext("time") or "").strip(),
+                    "msgsavetype": (node.findtext("msgsavetype") or "").strip(),
+                    "msgstate": (node.findtext("msgstate") or "").strip(),
+                }
+            )
+        return items
 
     async def poll_downchannel_once(self) -> tuple[int, str]:
         base = self._auth_base()

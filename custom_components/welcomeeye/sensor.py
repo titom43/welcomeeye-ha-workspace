@@ -75,6 +75,15 @@ class WelcomeEyeEventTypeSensor(_BaseWelcomeEyeSensor):
             "command": event.get("command"),
             "unlock_method": event.get("unlock_method"),
             "badge_id": event.get("badge_id"),
+            "event_code": event.get("event_code"),
+            "alarm_state": event.get("alarm_state"),
+            "alarm_info": event.get("alarm_info"),
+            "lock_number": event.get("lock_number"),
+            "source": event.get("source"),
+            "source_name": event.get("source_name"),
+            "event_time": event.get("event_time"),
+            "message_id": event.get("message_id"),
+            "alarm_id": event.get("alarm_id"),
             "raw": event.get("raw"),
         }
 

@@ -20,6 +20,7 @@
           "verify_ssl": "Vérifier le certificat TLS",
           "enable_downchannel": "Activer le listener down-channel",
           "auth_base_url": "URL de base auth",
+          "alarm_base_url": "URL de base historique alarmes",
           "auth_mode": "Mode auth",
           "auth_account": "Compte auth",
           "auth_password": "Mot de passe auth",

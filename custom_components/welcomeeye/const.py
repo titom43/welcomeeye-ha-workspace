@@ -19,6 +19,7 @@ CONF_VERIFY_SSL = "verify_ssl"
 
 CONF_ENABLE_DOWNCHANNEL = "enable_downchannel"
 CONF_AUTH_BASE_URL = "auth_base_url"
+CONF_ALARM_BASE_URL = "alarm_base_url"
 CONF_AUTH_MODE = "auth_mode"
 CONF_AUTH_ACCOUNT = "auth_account"
 CONF_AUTH_PASSWORD = "auth_password"

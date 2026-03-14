@@ -10,6 +10,7 @@ from homeassistant.data_entry_flow import FlowResult
 
 from .const import (
     AUTH_MODES,
+    CONF_ALARM_BASE_URL,
     CONF_AUTH_ACCOUNT,
     CONF_AUTH_BASE_URL,
     CONF_AUTH_CODE,
@@ -73,6 +74,7 @@ def _schema(defaults: dict[str, Any]) -> vol.Schema:
                 default=defaults.get(CONF_ENABLE_DOWNCHANNEL, DEFAULT_ENABLE_DOWNCHANNEL),
             ): bool,
             vol.Optional(CONF_AUTH_BASE_URL, default=defaults.get(CONF_AUTH_BASE_URL, "")): str,
+            vol.Optional(CONF_ALARM_BASE_URL, default=defaults.get(CONF_ALARM_BASE_URL, "")): str,
             vol.Required(CONF_AUTH_MODE, default=defaults.get(CONF_AUTH_MODE, DEFAULT_AUTH_MODE)): vol.In(
                 AUTH_MODES
             ),

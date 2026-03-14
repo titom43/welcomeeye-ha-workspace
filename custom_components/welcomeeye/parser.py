@@ -13,6 +13,50 @@ BADGE_KEYWORDS = ("badge", "rfid", "card", "nfc", "tag", "ic")
 BADGE_ID_RE = re.compile(r"(?:badge|card|rfid|tag|nfc)[^0-9a-zA-Z]{0,8}([0-9A-Fa-f]{4,32})")
 
 
+def parse_alarm_history_item(item: dict[str, Any]) -> dict[str, Any]:
+    event_code = int(item.get("event", 0) or 0)
+    alarm_state = int(item.get("alarmstate", 0) or 0)
+    alarm_info = item.get("alarminfo")
+    source_name = item.get("alarmsourcename") or item.get("sourceName")
+    source = item.get("alarmsource") or item.get("source")
+    lock_number = None
+    if isinstance(alarm_info, str) and alarm_info.isdigit():
+        lock_number = int(alarm_info)
+
+    event_type = "other"
+    unlock_method = None
+
+    if event_code == 19 and alarm_state == 1:
+        event_type = "ring"
+    elif event_code == 63 and alarm_state == 5:
+        event_type = "unlock"
+        unlock_method = "badge"
+    elif event_code == 63 and alarm_state == 4:
+        event_type = "unlock"
+        unlock_method = "app_or_remote"
+
+    return {
+        "ts": datetime.now(UTC).isoformat(),
+        "format": "alarm_history",
+        "event_type": event_type,
+        "event_code": event_code,
+        "alarm_state": alarm_state,
+        "command": "client-query-recordlist",
+        "unlock_method": unlock_method,
+        "badge_id": None,
+        "lock_number": lock_number,
+        "alarm_info": alarm_info,
+        "source": source,
+        "source_name": source_name,
+        "event_time": item.get("time"),
+        "message_id": item.get("id"),
+        "alarm_id": item.get("alarmid"),
+        "device_id": item.get("devid"),
+        "raw": json.dumps(item, ensure_ascii=False),
+        "data": item,
+    }
+
+
 def _xml_to_obj(node: ET.Element) -> Any:
     children = list(node)
     if not children:

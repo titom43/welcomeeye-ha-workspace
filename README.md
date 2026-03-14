@@ -37,9 +37,12 @@ This repository now contains:
   - `verify_ssl`
 - Optional down-channel listener:
   - `enable_downchannel`
-  - `auth_base_url`, `auth_mode`
+  - `auth_base_url`, `alarm_base_url`, `auth_mode`
   - `auth_account`, `auth_password` (except free mode)
   - `auth_type`, `auth_code`, `ip_region_id`, `read_timeout`
+  - `alarm_base_url` can be left empty if your auth host follows the usual
+    `shi-XX-sec.qvcloud.net` pattern; the integration will derive
+    `https://shi-(XX+1)-sec.qvcloud.net:4443/UserAlarm`
 
 ### Entities and service
 
@@ -66,16 +69,21 @@ If that local path does not answer as expected, the integration keeps the previo
 
 ### Badge unlock info
 
-The integration parses down-channel payloads and attempts to detect:
+The integration now combines:
 
-- call/ring events
-- unlock events
-- badge/RFID/card events and badge IDs
+- local LAN opening on `443`
+- optional cloud event polling from `UserAlarm`
 
-Important:
-- badge identification depends on what your model/firmware actually sends in payload.
-- if badge metadata is present, `Last Badge ID` and `Last Unlock Method=badge` will update.
-- if payload does not include explicit badge info, unlock remains classified as `app_or_remote`/`unknown`.
+Reliable event mappings observed on this device:
+
+- `event=19`, `alarmState=1` -> ring
+- `event=63`, `alarmState=4` -> app/remote unlock
+- `event=63`, `alarmState=5` -> badge unlock
+
+Current limitation:
+- the app/cloud payloads observed so far do not expose the badge name (`Alice`, etc.),
+  so `Last Badge ID` will usually stay empty even when the unlock method is correctly
+  classified as `badge`.
 
 ## Utility Scripts
 
