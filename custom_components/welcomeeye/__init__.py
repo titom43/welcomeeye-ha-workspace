@@ -10,16 +10,21 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import WelcomeEyeClient
-from .const import (
+from homeassistant.const import (
     CONF_DOOR,
     CONF_LOCK_NUMBER,
+    EVENT_HOMEASSISTANT_STARTED,
+    Platform,
+)
+from .const import (
     DATA_RUNTIME,
     DATA_SERVICE_REGISTERED,
     DOMAIN,
-    PLATFORMS,
     SERVICE_OPEN_DOOR,
 )
 from .coordinator import WelcomeEyeRuntime
+
+PLATFORMS: list[Platform] = [Platform.BUTTON, Platform.SENSOR, Platform.BINARY_SENSOR]
 
 
 async def _async_register_services(hass: HomeAssistant) -> None:
@@ -71,7 +76,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await _async_register_services(hass)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    await runtime.async_start()
+    
+    async def _start_runtime(_event: Any) -> None:
+        await runtime.async_start()
+
+    if hass.is_running:
+        await runtime.async_start()
+    else:
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _start_runtime)
+
     return True
 
 
