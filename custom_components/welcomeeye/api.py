@@ -293,16 +293,16 @@ def _build_login_xml(config: dict[str, Any]) -> str:
         "<envelope>"
         "<header>"
         "<flag>tdkcloud</flag>"
-        "<version></version>"
+        "<version>v1.13</version>"
         "<command>login</command>"
         "<seq>0</seq>"
         "<session></session>"
         "<user-data></user-data>"
         "<client>"
         "<id>ha-welcomeeye</id>"
-        "<type>0</type>"
-        "<oem>ha</oem>"
-        "<app>0</app>"
+        "<type>3</type>"
+        "<oem>G0123,A0058,G0058</oem>"
+        "<app>4123</app>"
         "</client>"
         "</header>"
         "<content>"
@@ -473,13 +473,13 @@ class WelcomeEyeClient:
             bases_to_try.append(configured_base)
             
         # Add seeds if needed (common entry points)
+        # Port 443 is common for auth, 4443 for alarm, but we try both.
         seeds = [
+            "https://shi-19-sec.qvcloud.net",
             "https://shi-19-sec.qvcloud.net:4443",
-            "https://shi-19-sec.qvcloud.net:443",
+            "https://shi-27-sec.qvcloud.net",
             "https://shi-27-sec.qvcloud.net:4443",
-            "https://shi-27-sec.qvcloud.net:443",
-            "https://api-sec.qvcloud.net:4443",
-            "https://api-sec.qvcloud.net:443",
+            "https://api-sec.qvcloud.net",
         ]
         for seed in seeds:
             if seed not in bases_to_try:
@@ -497,23 +497,24 @@ class WelcomeEyeClient:
 
         for base in bases_to_try:
             url = f"{base.rstrip('/')}{path}"
-            _LOGGER.debug("Attempting auth login on %s", url)
+            _LOGGER.debug("Attempting cloud login on %s", url)
             try:
                 resp = await self._request("POST", url, data=payload, headers=headers, timeout=10)
                 body = await resp.text()
                 if resp.status != 200:
+                    _LOGGER.debug("Server %s returned HTTP %s", base, resp.status)
+                    continue
+
+                root = ET.fromstring(body)
+                res = root.findtext("./header/result")
+                if res != "0":
+                    _LOGGER.debug("Cloud login rejected by %s (Result code: %s)", base, res)
                     continue
 
                 self._cookies.clear()
                 for cookie in resp.cookies.values():
                     self._cookies[cookie.key] = cookie.value
                 
-                root = ET.fromstring(body)
-                res = root.findtext("./header/result")
-                if res != "0":
-                    _LOGGER.warning("Auth login error on %s: %s", base, res)
-                    continue
-
                 self._auth_session_id = root.findtext("./header/session/id") or root.findtext("./header/session")
                 content = root.find("./content")
                 if content is not None:
