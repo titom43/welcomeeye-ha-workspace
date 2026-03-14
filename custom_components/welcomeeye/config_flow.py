@@ -54,7 +54,6 @@ def _schema(defaults: dict[str, Any]) -> vol.Schema:
             vol.Required(CONF_DEVICE_PASSWORD, default=defaults.get(CONF_DEVICE_PASSWORD, "")): str,
             vol.Optional(CONF_AUTH_ACCOUNT, default=defaults.get(CONF_AUTH_ACCOUNT, "")): str,
             vol.Optional(CONF_AUTH_PASSWORD, default=defaults.get(CONF_AUTH_PASSWORD, "")): str,
-            vol.Optional(CONF_AUTH_CODE, default=defaults.get(CONF_AUTH_CODE, "")): str, # CID / Intercom ID
             vol.Required(CONF_POLL_INTERVAL_MIN, default=defaults.get(CONF_POLL_INTERVAL_MIN, 5)): int,
         }
     )
@@ -92,15 +91,22 @@ class WelcomeEyeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         errors: dict[str, str] = {}
         if user_input is not None:
-            # We must validate and fill defaults BEFORE setting unique ID
-            errors = _validate(user_input)
-            if not errors:
-                host = user_input.get(CONF_DEVICE_HOST) or user_input.get(CONF_AUTH_ACCOUNT)
-                port = user_input.get(CONF_CGI_PORT, DEFAULT_CGI_PORT)
-                await self.async_set_unique_id(f"{host}:{port}")
-                self._abort_if_unique_id_configured()
-                return self.async_create_entry(title=user_input[CONF_NAME], data=user_input)
-        return self.async_show_form(step_id="user", data_schema=_schema({}), errors=errors)
+            try:
+                # We must validate and fill defaults BEFORE setting unique ID
+                errors = _validate(user_input)
+                if not errors:
+                    host = user_input.get(CONF_DEVICE_HOST) or user_input.get(CONF_AUTH_ACCOUNT)
+                    port = user_input.get(CONF_CGI_PORT, DEFAULT_CGI_PORT)
+                    await self.async_set_unique_id(f"{host}:{port}")
+                    self._abort_if_unique_id_configured()
+                    return self.async_create_entry(title=user_input[CONF_NAME], data=user_input)
+            except config_entries.AlreadyConfigured:
+                return self.async_abort(reason="already_configured")
+            except Exception as exc:  # noqa: BLE001
+                _LOGGER.exception("Unexpected exception during setup: %s", exc)
+                errors["base"] = "unknown"
+
+        return self.async_show_form(step_id="user", data_schema=_schema(user_input or {}), errors=errors)
 
     @staticmethod
     @callback

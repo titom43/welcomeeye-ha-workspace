@@ -10,7 +10,6 @@
           "device_password": "Code local (6 chiffres écran)",
           "auth_account": "Email Cloud (optionnel)",
           "auth_password": "Mot de passe Cloud",
-          "auth_code": "UID Interphone (Optionnel)",
           "poll_interval_min": "Fréquence de polling (min, 0=jamais)"
         }
       }
