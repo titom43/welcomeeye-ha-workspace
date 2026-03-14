@@ -15,8 +15,6 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
-    CONF_DOOR,
-    CONF_LOCK_NUMBER,
     DATA_RUNTIME,
     DATA_SERVICE_REGISTERED,
     DOMAIN,
@@ -43,9 +41,10 @@ async def _async_register_services(hass: HomeAssistant) -> None:
         if not runtime:
             raise HomeAssistantError("No matching WelcomeEye config entry.")
 
+        # Use literal strings to avoid import issues
         result = await runtime.async_open_door(
-            door=call.data.get(CONF_DOOR),
-            lock_number=call.data.get(CONF_LOCK_NUMBER),
+            door=call.data.get("door"),
+            lock_number=call.data.get("lock_number"),
         )
         if not result.get("ok"):
             raise HomeAssistantError(f"Open door failed: {result.get('cgi_error')}")
@@ -57,8 +56,8 @@ async def _async_register_services(hass: HomeAssistant) -> None:
         schema=vol.Schema(
             {
                 vol.Optional("entry_id"): cv.string,
-                vol.Optional(CONF_DOOR): cv.positive_int,
-                vol.Optional(CONF_LOCK_NUMBER): vol.In([1, 2]),
+                vol.Optional("door"): cv.positive_int,
+                vol.Optional("lock_number"): vol.In([1, 2]),
             }
         ),
     )
