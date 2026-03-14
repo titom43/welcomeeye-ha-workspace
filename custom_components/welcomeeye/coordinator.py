@@ -78,6 +78,7 @@ class WelcomeEyeRuntime:
     async def _run_alarm_poll(self) -> None:
         _LOGGER.info("Starting WelcomeEye Door Connect event watcher")
         initialized = False
+        failure_count = 0
 
         while not self._stop.is_set():
             try:
@@ -86,10 +87,16 @@ class WelcomeEyeRuntime:
                     _LOGGER.debug("No cloud session, logging in...")
                     if await self.client.login_auth():
                         await self.client.login_alarm()
+                        failure_count = 0 # Reset on success
                     else:
-                        _LOGGER.warning("Cloud login failed, retrying in 60s")
+                        failure_count += 1
+                        # Backoff: 1m, 2m, 5m, then 15m max
+                        wait_times = [60, 120, 300, 900]
+                        wait_sec = wait_times[min(failure_count - 1, len(wait_times) - 1)]
+                        _LOGGER.warning("Cloud login failed (attempt %s), retrying in %ss", failure_count, wait_sec)
+                        
                         try:
-                            await asyncio.wait_for(self._stop.wait(), timeout=60)
+                            await asyncio.wait_for(self._stop.wait(), timeout=wait_sec)
                         except asyncio.TimeoutError:
                             pass
                         continue

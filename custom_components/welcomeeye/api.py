@@ -370,18 +370,25 @@ for base in bases_to_try:
         try:
             resp = await self._request("POST", url, data=payload, headers=headers, timeout=10)
             body = await resp.text()
-            if resp.status != 200: continue
+            if resp.status != 200:
+                _LOGGER.info("Cloud server %s returned HTTP %s", base, resp.status)
+                continue
 
             try:
                 root = ET.fromstring(body)
-            except ET.ParseError: continue
+            except ET.ParseError:
+                _LOGGER.info("Cloud server %s returned invalid XML", base)
+                continue
 
             res = root.findtext("./header/result")
             if res != "0":
                 _LOGGER.info("Cloud login rejected by %s (Region %s, Result %s)", base, region, res)
                 continue
+        ...
+        except Exception as exc:
+        _LOGGER.info("Connection failed to %s: %s", base, exc)
+        continue
 
-            # Success!
             self._cookies.clear()
 ...
 
