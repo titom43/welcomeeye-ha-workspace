@@ -37,6 +37,9 @@ def parse_alarm_history_item(item: dict[str, Any]) -> dict[str, Any]:
         badge_match = BADGE_ID_RE.search(hay)
         if badge_match:
             badge_id = badge_match.group(1)
+        elif source and source.startswith("U"):
+            # Often badges are U1, U2, etc.
+            badge_id = source
         elif source_name and "badge" in source_name.lower():
             # Fallback: use source_name if it looks like a badge name
             badge_id = source_name
