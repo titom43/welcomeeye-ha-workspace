@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import timedelta
 from typing import Any
 
@@ -15,6 +16,8 @@ from homeassistant.helpers.event import async_call_later
 
 from .const import CONF_NAME, SIGNAL_EVENT, CONF_AUTH_ACCOUNT
 from .coordinator import WelcomeEyeRuntime, get_runtime
+
+_LOGGER = logging.getLogger(__name__)
 
 # Durée pendant laquelle le capteur de sonnette reste actif après un événement
 RING_DURATION = 10
@@ -65,9 +68,10 @@ class WelcomeEyeDoorbellSensor(BinarySensorEntity):
             return
 
         event_type = self._runtime.last_event.get("event_type")
+        _LOGGER.debug("Doorbell handling event update: %s", event_type)
         
-        # On active la sonnette si l'événement est de type 'ring'
-        if event_type == "ring":
+        # On active la sonnette si l'événement est de type 'ring' ou 'call'
+        if event_type in ("ring", "call"):
             self._is_on = True
             self.async_write_ha_state()
 

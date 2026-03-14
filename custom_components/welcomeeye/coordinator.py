@@ -123,7 +123,7 @@ class WelcomeEyeRuntime:
                     _LOGGER.debug("Event update (manual=%s): %s", is_manual, parsed)
                     self.last_event = parsed
                     async_dispatcher_send(self.hass, SIGNAL_EVENT.format(entry_id=self.entry_id))
-                
+
                 self._refresh_event.clear()
                 
                 # Wait for next poll or manual refresh
