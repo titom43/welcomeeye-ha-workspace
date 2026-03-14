@@ -5,7 +5,9 @@
 </p>
 
 <p align="center">
-  Local control and cloud event monitoring for WelcomeEye Connect 3 intercoms from Home Assistant.
+  Local control and cloud event monitoring for WelcomeEye Connect 3 intercoms from Home Assistant. 
+  
+  **Note:** This integration is specifically designed for the **WelcomeEye Connect 3** using the **Philips WelcomeEye Door Connect** mobile application.
 </p>
 
 <p align="center">
@@ -33,7 +35,7 @@
 
 1. **Click the HACS badge above** to open this repository directly in your HACS instance.
 2. Or manually add this repository as a **Custom Repository** in HACS (Integration category).
-3. Install **WelcomeEye Local**.
+3. Install **WelcomeEye Door Connect**.
 4. Restart Home Assistant.
 5. **Click the Config Flow badge above** or go to `Settings -> Devices & Services -> Add Integration` and search for **WelcomeEye**.
 
@@ -57,7 +59,7 @@ Provide only the **Cloud Email**, **Password**, and **Intercom ID (CID)**.
 ### Fields detail:
 - **Intercom IP**: Local IP address of your monitor.
 - **Local Code**: The 6-digit code you configured on the monitor screen.
-- **Cloud Email & Password**: Your Philips WelcomeEye app credentials.
+- **Cloud Email & Password**: Your Philips WelcomeEye Door Connect app credentials.
 - **Intercom ID / CID**: The unique ID of your intercom (found in the app settings, e.g., `2502uvs...`).
 - **Poll Frequency**: How often to check for events (in minutes, set to 0 to disable automatic polling).
 
