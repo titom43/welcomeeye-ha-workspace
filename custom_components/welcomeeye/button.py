@@ -6,6 +6,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import CONF_NAME, CONF_DEVICE_HOST, CONF_AUTH_ACCOUNT
+from .coordinator import get_runtime
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:

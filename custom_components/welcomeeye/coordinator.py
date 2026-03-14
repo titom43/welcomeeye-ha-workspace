@@ -112,14 +112,18 @@ class WelcomeEyeRuntime:
                 if not initialized:
                     self._last_alarm_id = latest_id
                     initialized = True
+                    # On parse quand même le premier pour avoir un état initial
+                    parsed = parse_alarm_history_item(latest)
+                    self.last_event = parsed
+                    async_dispatcher_send(self.hass, SIGNAL_EVENT.format(entry_id=self.entry_id))
                     _LOGGER.debug("Watcher initialized with ID %s", latest_id)
                 elif latest_id and latest_id != self._last_alarm_id:
                     self._last_alarm_id = latest_id
                     parsed = parse_alarm_history_item(latest)
                     _LOGGER.debug("New event detected and parsed: %s", parsed)
-                    if parsed.get("event_type") != "other":
-                        self.last_event = parsed
-                        async_dispatcher_send(self.hass, SIGNAL_EVENT.format(entry_id=self.entry_id))
+                    # On notifie Home Assistant systématiquement pour mettre à jour les capteurs
+                    self.last_event = parsed
+                    async_dispatcher_send(self.hass, SIGNAL_EVENT.format(entry_id=self.entry_id))
                 
                 # Wait for next poll or manual refresh
                 try:
