@@ -46,17 +46,20 @@ from .const import (
 )
 
 
-def _schema(defaults: dict[str, Any]) -> vol.Schema:
-    return vol.Schema(
-        {
-            vol.Required(CONF_NAME, default=defaults.get(CONF_NAME, DEFAULT_NAME)): str,
-            vol.Required(CONF_DEVICE_HOST, default=defaults.get(CONF_DEVICE_HOST, "")): str,
-            vol.Required(CONF_DEVICE_PASSWORD, default=defaults.get(CONF_DEVICE_PASSWORD, "")): str,
-            vol.Optional(CONF_AUTH_ACCOUNT, default=defaults.get(CONF_AUTH_ACCOUNT, "")): str,
-            vol.Optional(CONF_AUTH_PASSWORD, default=defaults.get(CONF_AUTH_PASSWORD, "")): str,
-            vol.Required(CONF_POLL_INTERVAL_MIN, default=defaults.get(CONF_POLL_INTERVAL_MIN, 5)): int,
-        }
-    )
+def _schema(defaults: dict[str, Any], is_options: bool = False) -> vol.Schema:
+    schema = {
+        vol.Required(CONF_NAME, default=defaults.get(CONF_NAME, DEFAULT_NAME)): str,
+        vol.Required(CONF_DEVICE_HOST, default=defaults.get(CONF_DEVICE_HOST, "")): str,
+        vol.Required(CONF_DEVICE_PASSWORD, default=defaults.get(CONF_DEVICE_PASSWORD, "")): str,
+        vol.Optional(CONF_AUTH_ACCOUNT, default=defaults.get(CONF_AUTH_ACCOUNT, "")): str,
+        vol.Optional(CONF_AUTH_PASSWORD, default=defaults.get(CONF_AUTH_PASSWORD, "")): str,
+        vol.Required(CONF_POLL_INTERVAL_MIN, default=defaults.get(CONF_POLL_INTERVAL_MIN, 5)): int,
+    }
+    if is_options:
+        # Allow advanced tuning in options flow
+        schema[vol.Optional(CONF_AUTH_BASE_URL, default=defaults.get(CONF_AUTH_BASE_URL, "https://shi-1-sec.qvcloud.net"))] = str
+        
+    return vol.Schema(schema)
 
 
 def _validate(data: dict[str, Any]) -> dict[str, str]:
@@ -70,7 +73,8 @@ def _validate(data: dict[str, Any]) -> dict[str, str]:
     data.setdefault(CONF_DOOR, DEFAULT_DOOR)
     data.setdefault(CONF_LOCK_NUMBER, DEFAULT_LOCK_NUMBER)
     data.setdefault(CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL)
-    data.setdefault(CONF_AUTH_BASE_URL, "https://shi-1-sec.qvcloud.net:4443")
+    # Default to port 443 for auth entry point
+    data.setdefault(CONF_AUTH_BASE_URL, "https://shi-1-sec.qvcloud.net")
     data.setdefault(CONF_AUTH_MODE, DEFAULT_AUTH_MODE)
     data.setdefault(CONF_AUTH_TYPE, DEFAULT_AUTH_TYPE)
     data.setdefault(CONF_IP_REGION_ID, DEFAULT_IP_REGION_ID)
@@ -127,4 +131,4 @@ class WelcomeEyeOptionsFlow(config_entries.OptionsFlow):
                 new_data = {**self._config_entry.data, **user_input}
                 self.hass.config_entries.async_update_entry(self._config_entry, data=new_data)
                 return self.async_create_entry(title="", data={})
-        return self.async_show_form(step_id="init", data_schema=_schema(current), errors=errors)
+        return self.async_show_form(step_id="init", data_schema=_schema(current, is_options=True), errors=errors)

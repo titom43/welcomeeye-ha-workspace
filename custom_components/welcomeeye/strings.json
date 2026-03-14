@@ -10,6 +10,7 @@
           "device_password": "Local code (6 digits from screen)",
           "auth_account": "Cloud Email (optional)",
           "auth_password": "Cloud Password",
+          "auth_base_url": "Auth base URL (Advanced)",
           "poll_interval_min": "Poll frequency (min, 0=never)"
         }
       }
