@@ -88,7 +88,7 @@ class WelcomeEyeRuntime:
                         await self.client.login_alarm()
                     else:
                         _LOGGER.warning("Cloud login failed, retrying in 60s")
-                        await asyncio.sleep(60)
+                        await self._stop.wait(60)
                         continue
 
                 # 2. Query alarm list
@@ -102,11 +102,7 @@ class WelcomeEyeRuntime:
                         await self.client.login_alarm()
                     
                     # Small wait to avoid spinning
-                    try:
-                        await asyncio.wait_for(self._refresh_event.wait(), timeout=30)
-                        self._refresh_event.clear()
-                    except asyncio.TimeoutError:
-                        pass
+                    await self._stop.wait(30)
                     continue
 
                 latest = items[0]
@@ -151,7 +147,7 @@ class WelcomeEyeRuntime:
                 raise
             except Exception as exc:  # noqa: BLE001
                 _LOGGER.exception("Unexpected error in WelcomeEye poll loop: %s", exc)
-                await asyncio.sleep(60)
+                await self._stop.wait(60)
 
 
 def get_runtime(hass: HomeAssistant, entry_id: str) -> WelcomeEyeRuntime:
