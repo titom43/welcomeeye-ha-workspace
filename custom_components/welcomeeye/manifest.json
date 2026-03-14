@@ -1,6 +1,6 @@
 {
   "domain": "welcomeeye",
-  "name": "WelcomeEye Local",
+  "name": "WelcomeEye Door Connect",
   "codeowners": ["@titom43"],
   "config_flow": true,
   "documentation": "https://github.com/titom43/welcomeeye-ha-workspace",
@@ -8,5 +8,5 @@
   "issue_tracker": "https://github.com/titom43/welcomeeye-ha-workspace/issues",
   "loggers": ["custom_components.welcomeeye"],
   "requirements": [],
-  "version": "0.2.0"
+  "version": "1.0.0"
 }

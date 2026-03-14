@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "WelcomeEye",
+        "title": "WelcomeEye Door Connect",
         "description": "Configure local access for the lock and optional cloud access for events (Watcher).",
         "data": {
           "name": "Integration name",

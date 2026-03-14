@@ -1,7 +1,7 @@
-# WelcomeEye Local
+# WelcomeEye Door Connect
 
 <p align="center">
-  <img src="assets/logo.svg" alt="WelcomeEye Local logo" width="160">
+  <img src="assets/logo.svg" alt="WelcomeEye Door Connect logo" width="160">
 </p>
 
 <p align="center">

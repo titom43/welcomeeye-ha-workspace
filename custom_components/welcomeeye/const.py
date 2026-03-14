@@ -27,7 +27,7 @@ CONF_AUTH_CODE = "auth_code"
 CONF_IP_REGION_ID = "ip_region_id"
 CONF_POLL_INTERVAL_MIN = "poll_interval_min"
 
-DEFAULT_NAME = "WelcomeEye"
+DEFAULT_NAME = "WelcomeEye Door Connect"
 DEFAULT_SCHEME = "https"
 DEFAULT_CGI_PORT = 443
 DEFAULT_SECURITY = "username"
