@@ -431,10 +431,21 @@ class WelcomeEyeClient:
         mode = self._config.get(CONF_AUTH_MODE)
         if mode not in AUTH_MODES:
             return False
-        if mode != "free" and (
-            not self._config.get(CONF_AUTH_ACCOUNT) or not self._config.get(CONF_AUTH_PASSWORD)
-        ):
+        
+        account = self._config.get(CONF_AUTH_ACCOUNT)
+        password = self._config.get(CONF_AUTH_PASSWORD)
+        
+        if mode != "free" and (not account or not password):
             return False
+
+        # If password is not already a hash (64 chars), hash it in SHA256
+        if password and len(password) != 64:
+            _LOGGER.debug("Hashing cloud password for authentication")
+            password = hashlib.sha256(password.encode("utf-8")).hexdigest()
+
+        # Update a temporary copy of config for the XML builder
+        temp_config = dict(self._config)
+        temp_config[CONF_AUTH_PASSWORD] = password
 
         # If we have a dynamic base that worked before, use it first
         bases_to_try = []
@@ -443,8 +454,7 @@ class WelcomeEyeClient:
         if configured_base:
             bases_to_try.append(configured_base)
             
-        # Add seeds if needed (common entry points)
-        # Port 443 is common for auth, 4443 for alarm, but we try both.
+        # Add seeds
         seeds = [
             "https://shi-19-sec.qvcloud.net",
             "https://shi-19-sec.qvcloud.net:4443",
@@ -457,7 +467,7 @@ class WelcomeEyeClient:
                 bases_to_try.append(seed)
 
         path = UP_PATH_BY_MODE[mode]
-        payload = _build_login_xml(self._config)
+        payload = _build_login_xml(temp_config)
         headers = {
             "Content-Type": "application/xml;charset=utf-8",
             "Accept": "*/*",
