@@ -8,6 +8,15 @@
   Local control and cloud event monitoring for WelcomeEye Connect 3 intercoms from Home Assistant.
 </p>
 
+<p align="center">
+  <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=titom43&repository=welcomeeye-ha-workspace&category=integration">
+    <img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open your Home Assistant instance and open this repository in HACS">
+  </a>
+  <a href="https://my.home-assistant.io/redirect/config_flow_start/?domain=welcomeeye">
+    <img src="https://my.home-assistant.io/badges/config_flow_start.svg" alt="Open your Home Assistant instance and start setting up WelcomeEye Local">
+  </a>
+</p>
+
 ## Features
 
 - **Local Unlock**: Open the **latch** (gâche) and the **gate** (portail) directly via the local device API. No cloud latency for opening.
@@ -22,10 +31,11 @@
 
 ### HACS (Recommended)
 
-1. Add this repository as a **Custom Repository** in HACS (Integration category).
-2. Install **WelcomeEye Local**.
-3. Restart Home Assistant.
-4. Go to `Settings -> Devices & Services -> Add Integration` and search for **WelcomeEye**.
+1. **Click the HACS badge above** to open this repository directly in your HACS instance.
+2. Or manually add this repository as a **Custom Repository** in HACS (Integration category).
+3. Install **WelcomeEye Local**.
+4. Restart Home Assistant.
+5. **Click the Config Flow badge above** or go to `Settings -> Devices & Services -> Add Integration` and search for **WelcomeEye**.
 
 ## Configuration
 
