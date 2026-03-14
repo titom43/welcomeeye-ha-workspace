@@ -124,12 +124,14 @@ class WelcomeEyeOptionsFlow(config_entries.OptionsFlow):
         self._config_entry = config_entry
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> FlowResult:
-        current = dict(self._config_entry.data)
-        errors: dict[str, str] = {}
         if user_input is not None:
             errors = _validate(user_input)
             if not errors:
+                # Proper merge of current data and new input
                 new_data = {**self._config_entry.data, **user_input}
                 self.hass.config_entries.async_update_entry(self._config_entry, data=new_data)
+                # Return success and close form
                 return self.async_create_entry(title="", data={})
-        return self.async_show_form(step_id="init", data_schema=_schema(current, is_options=True), errors=errors)
+            return self.async_show_form(step_id="init", data_schema=_schema(user_input, is_options=True), errors=errors)
+
+        return self.async_show_form(step_id="init", data_schema=_schema(dict(self._config_entry.data), is_options=True))

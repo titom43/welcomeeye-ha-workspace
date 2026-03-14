@@ -52,6 +52,7 @@ class _BaseWelcomeEyeSensor(SensorEntity):
             self._remove_dispatcher()
             self._remove_dispatcher = None
 
+    @callback
     def _handle_runtime_update(self) -> None:
         self.async_write_ha_state()
 

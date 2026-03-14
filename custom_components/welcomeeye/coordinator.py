@@ -72,7 +72,7 @@ class WelcomeEyeRuntime:
                 "alarm_info": str(lock_number or self.config.get("lock_number", 1)),
                 "raw": result.get("response", ""),
             }
-        async_dispatcher_send(self.hass, SIGNAL_EVENT.format(entry_id=self.entry_id))
+        self.hass.add_job(async_dispatcher_send, self.hass, SIGNAL_EVENT.format(entry_id=self.entry_id))
         return result
 
     async def _run_alarm_poll(self) -> None:
@@ -123,7 +123,7 @@ class WelcomeEyeRuntime:
                                  parsed.get("unlock_method"),
                                  parsed.get("badge_id"))
                                  
-                    async_dispatcher_send(self.hass, SIGNAL_EVENT.format(entry_id=self.entry_id))
+                    self.hass.add_job(async_dispatcher_send, self.hass, SIGNAL_EVENT.format(entry_id=self.entry_id))
                     initialized = True
 
                 self._refresh_event.clear()
