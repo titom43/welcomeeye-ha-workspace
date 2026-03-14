@@ -103,7 +103,10 @@ def _build_digest_authorization(
 
 
 def _build_login_xml(config: dict[str, Any]) -> str:
-    client_id = config.get("client_id", "003-4123-09f95ff624058e33")
+    client_id = config.get("client_id", "ha-welcomeeye")
+    if "003-4123" not in client_id:
+        client_id = "003-4123-09f95ff624058e33" # Format officiel
+        
     return (
         '<?xml version="1.0" encoding="UTF-8"?>'
         "<envelope>"
@@ -336,7 +339,6 @@ class WelcomeEyeClient:
         if not account or not password:
             return False
 
-        # SHA256 Hashing only if not already hashed (64 chars)
         if len(password) != 64:
             password = hashlib.sha256(password.encode("utf-8")).hexdigest()
 
@@ -347,11 +349,7 @@ class WelcomeEyeClient:
         if self._dynamic_auth_base: bases_to_try.append(self._dynamic_auth_base)
         if self._auth_base(): bases_to_try.append(self._auth_base())
         
-        # Add seeds (common entry points)
-        seeds = [
-            "https://shi-19-sec.qvcloud.net",
-            "https://api-sec.qvcloud.net",
-        ]
+        seeds = ["https://shi-19-sec.qvcloud.net", "https://api-sec.qvcloud.net"]
         for seed in seeds:
             if seed not in bases_to_try: bases_to_try.append(seed)
 
@@ -368,15 +366,21 @@ class WelcomeEyeClient:
 
         for base in bases_to_try:
             url = f"{base.rstrip('/')}{path}"
+            _LOGGER.debug("Attempting cloud login on %s", url)
             try:
                 resp = await self._request("POST", url, data=payload, headers=headers, timeout=10)
                 body = await resp.text()
                 if resp.status != 200: continue
-                root = ET.fromstring(body)
+                
+                try:
+                    root = ET.fromstring(body)
+                except ET.ParseError: continue
+                
                 res = root.findtext("./header/result")
                 if res != "0":
                     _LOGGER.info("Cloud login rejected by %s (Error %s)", base, res)
                     continue
+
                 self._cookies.clear()
                 for cookie in resp.cookies.values(): self._cookies[cookie.key] = cookie.value
                 self._auth_session_id = root.findtext("./header/session/id") or root.findtext("./header/session")
@@ -384,6 +388,7 @@ class WelcomeEyeClient:
                 if content is not None:
                     self._account_id = (content.findtext("account-id") or "").strip()
                     self._auth_token = (content.findtext("token") or "").strip()
+                
                 self._dynamic_auth_base = base
                 self._auth_server_host = urlparse(base).hostname
                 _LOGGER.info("Successfully logged in to WelcomeEye Cloud via %s", base)
