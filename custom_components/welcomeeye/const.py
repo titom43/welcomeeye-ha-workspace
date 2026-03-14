@@ -17,7 +17,6 @@ CONF_LOCK_NUMBER = "lock_number"
 CONF_OPEN_PASSWORD = "open_password"
 CONF_VERIFY_SSL = "verify_ssl"
 
-CONF_ENABLE_DOWNCHANNEL = "enable_downchannel"
 CONF_AUTH_BASE_URL = "auth_base_url"
 CONF_ALARM_BASE_URL = "alarm_base_url"
 CONF_AUTH_MODE = "auth_mode"
@@ -26,8 +25,6 @@ CONF_AUTH_PASSWORD = "auth_password"
 CONF_AUTH_TYPE = "auth_type"
 CONF_AUTH_CODE = "auth_code"
 CONF_IP_REGION_ID = "ip_region_id"
-CONF_READ_TIMEOUT = "read_timeout"
-CONF_SCAN_INTERVAL = "scan_interval"
 CONF_POLL_INTERVAL_MIN = "poll_interval_min"
 
 DEFAULT_NAME = "WelcomeEye"
@@ -37,12 +34,9 @@ DEFAULT_SECURITY = "username"
 DEFAULT_DOOR = 1
 DEFAULT_LOCK_NUMBER = 1
 DEFAULT_VERIFY_SSL = False
-DEFAULT_ENABLE_DOWNCHANNEL = False
 DEFAULT_AUTH_MODE = "user"
 DEFAULT_AUTH_TYPE = 0
 DEFAULT_IP_REGION_ID = 0
-DEFAULT_READ_TIMEOUT = 45
-DEFAULT_SCAN_INTERVAL = 300
 
 AUTH_MODES = ["user", "third", "deli", "free"]
 

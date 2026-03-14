@@ -26,7 +26,6 @@ from .const import (
     CONF_HS_DEVICE,
     CONF_IP_REGION_ID,
     CONF_OPEN_PASSWORD,
-    CONF_READ_TIMEOUT,
     CONF_SCHEME,
     CONF_SECURITY,
     CONF_USERNAME,
@@ -40,12 +39,6 @@ UP_PATH_BY_MODE = {
     "third": "/auth/user;jus_duplex=up",
     "deli": "/auth/user/deli;jus_duplex=up",
     "free": "/auth/nologin;jus_duplex=up",
-}
-DOWN_PATH_BY_MODE = {
-    "user": "/auth/user;jus_duplex=down",
-    "third": "/auth/user;jus_duplex=down",
-    "deli": "/auth/user/deli;jus_duplex=down",
-    "free": "/auth/nologin;jus_duplex=down",
 }
 
 

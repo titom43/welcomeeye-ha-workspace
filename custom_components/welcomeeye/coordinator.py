@@ -9,8 +9,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 
 from .api import WelcomeEyeClient
-from .const import CONF_ENABLE_DOWNCHANNEL, DATA_RUNTIME, SIGNAL_EVENT, CONF_POLL_INTERVAL_MIN
-from .parser import parse_alarm_history_item, parse_downchannel_payload
+from .const import DATA_RUNTIME, SIGNAL_EVENT, CONF_POLL_INTERVAL_MIN, CONF_AUTH_ACCOUNT, CONF_AUTH_PASSWORD
+from .parser import parse_alarm_history_item
 
 _LOGGER = logging.getLogger(__name__)
 

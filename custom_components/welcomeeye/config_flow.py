@@ -22,14 +22,12 @@ from .const import (
     CONF_DEVICE_HOST,
     CONF_DEVICE_PASSWORD,
     CONF_DOOR,
-    CONF_LOCK_NUMBER,
-    CONF_ENABLE_DOWNCHANNEL,
     CONF_HS_DEVICE,
     CONF_IP_REGION_ID,
+    CONF_LOCK_NUMBER,
     CONF_NAME,
     CONF_OPEN_PASSWORD,
-    CONF_READ_TIMEOUT,
-    CONF_SCAN_INTERVAL,
+    CONF_POLL_INTERVAL_MIN,
     CONF_SCHEME,
     CONF_SECURITY,
     CONF_USERNAME,
@@ -38,12 +36,9 @@ from .const import (
     DEFAULT_AUTH_TYPE,
     DEFAULT_CGI_PORT,
     DEFAULT_DOOR,
-    DEFAULT_LOCK_NUMBER,
-    DEFAULT_ENABLE_DOWNCHANNEL,
     DEFAULT_IP_REGION_ID,
+    DEFAULT_LOCK_NUMBER,
     DEFAULT_NAME,
-    DEFAULT_READ_TIMEOUT,
-    DEFAULT_SCAN_INTERVAL,
     DEFAULT_SCHEME,
     DEFAULT_SECURITY,
     DEFAULT_VERIFY_SSL,
@@ -99,9 +94,12 @@ class WelcomeEyeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         errors: dict[str, str] = {}
         if user_input is not None:
+            # We must validate and fill defaults BEFORE setting unique ID
             errors = _validate(user_input)
             if not errors:
-                await self.async_set_unique_id(f"{user_input[CONF_DEVICE_HOST]}:{user_input[CONF_CGI_PORT]}")
+                host = user_input.get(CONF_DEVICE_HOST) or user_input.get(CONF_AUTH_ACCOUNT)
+                port = user_input.get(CONF_CGI_PORT, DEFAULT_CGI_PORT)
+                await self.async_set_unique_id(f"{host}:{port}")
                 self._abort_if_unique_id_configured()
                 return self.async_create_entry(title=user_input[CONF_NAME], data=user_input)
         return self.async_show_form(step_id="user", data_schema=_schema({}), errors=errors)
