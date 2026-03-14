@@ -75,8 +75,6 @@ def _validate(data: dict[str, Any]) -> dict[str, str]:
     data.setdefault(CONF_AUTH_MODE, DEFAULT_AUTH_MODE)
     data.setdefault(CONF_AUTH_TYPE, DEFAULT_AUTH_TYPE)
     data.setdefault(CONF_IP_REGION_ID, DEFAULT_IP_REGION_ID)
-    data.setdefault(CONF_READ_TIMEOUT, DEFAULT_READ_TIMEOUT)
-    data.setdefault(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
     data.setdefault(CONF_HS_DEVICE, True)
 
     has_local = bool(data.get(CONF_DEVICE_HOST) and data.get(CONF_DEVICE_PASSWORD))
