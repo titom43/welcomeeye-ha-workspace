@@ -29,6 +29,7 @@ from .const import (
     CONF_NAME,
     CONF_OPEN_PASSWORD,
     CONF_READ_TIMEOUT,
+    CONF_SCAN_INTERVAL,
     CONF_SCHEME,
     CONF_SECURITY,
     CONF_USERNAME,
@@ -42,6 +43,7 @@ from .const import (
     DEFAULT_IP_REGION_ID,
     DEFAULT_NAME,
     DEFAULT_READ_TIMEOUT,
+    DEFAULT_SCAN_INTERVAL,
     DEFAULT_SCHEME,
     DEFAULT_SECURITY,
     DEFAULT_VERIFY_SSL,
@@ -54,57 +56,41 @@ def _schema(defaults: dict[str, Any]) -> vol.Schema:
         {
             vol.Required(CONF_NAME, default=defaults.get(CONF_NAME, DEFAULT_NAME)): str,
             vol.Required(CONF_DEVICE_HOST, default=defaults.get(CONF_DEVICE_HOST, "")): str,
-            vol.Required(CONF_CGI_PORT, default=defaults.get(CONF_CGI_PORT, DEFAULT_CGI_PORT)): int,
-            vol.Required(CONF_SCHEME, default=defaults.get(CONF_SCHEME, DEFAULT_SCHEME)): vol.In(
-                ["http", "https"]
-            ),
-            vol.Required(CONF_USERNAME, default=defaults.get(CONF_USERNAME, "adminapp2")): str,
             vol.Required(CONF_DEVICE_PASSWORD, default=defaults.get(CONF_DEVICE_PASSWORD, "")): str,
-            vol.Optional(CONF_DATA_ENCODE_KEY, default=defaults.get(CONF_DATA_ENCODE_KEY, "")): str,
-            vol.Required(CONF_HS_DEVICE, default=defaults.get(CONF_HS_DEVICE, False)): bool,
-            vol.Required(CONF_SECURITY, default=defaults.get(CONF_SECURITY, DEFAULT_SECURITY)): str,
-            vol.Required(CONF_DOOR, default=defaults.get(CONF_DOOR, DEFAULT_DOOR)): int,
-            vol.Required(CONF_LOCK_NUMBER, default=defaults.get(CONF_LOCK_NUMBER, DEFAULT_LOCK_NUMBER)): vol.In(
-                [1, 2]
-            ),
-            vol.Optional(CONF_OPEN_PASSWORD, default=defaults.get(CONF_OPEN_PASSWORD, "")): str,
-            vol.Required(CONF_VERIFY_SSL, default=defaults.get(CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL)): bool,
-            vol.Required(
-                CONF_ENABLE_DOWNCHANNEL,
-                default=defaults.get(CONF_ENABLE_DOWNCHANNEL, DEFAULT_ENABLE_DOWNCHANNEL),
-            ): bool,
-            vol.Optional(CONF_AUTH_BASE_URL, default=defaults.get(CONF_AUTH_BASE_URL, "")): str,
-            vol.Optional(CONF_ALARM_BASE_URL, default=defaults.get(CONF_ALARM_BASE_URL, "")): str,
-            vol.Required(CONF_AUTH_MODE, default=defaults.get(CONF_AUTH_MODE, DEFAULT_AUTH_MODE)): vol.In(
-                AUTH_MODES
-            ),
             vol.Optional(CONF_AUTH_ACCOUNT, default=defaults.get(CONF_AUTH_ACCOUNT, "")): str,
             vol.Optional(CONF_AUTH_PASSWORD, default=defaults.get(CONF_AUTH_PASSWORD, "")): str,
-            vol.Required(CONF_AUTH_TYPE, default=defaults.get(CONF_AUTH_TYPE, DEFAULT_AUTH_TYPE)): int,
-            vol.Optional(CONF_AUTH_CODE, default=defaults.get(CONF_AUTH_CODE, "")): str,
-            vol.Required(CONF_IP_REGION_ID, default=defaults.get(CONF_IP_REGION_ID, DEFAULT_IP_REGION_ID)): int,
-            vol.Required(CONF_READ_TIMEOUT, default=defaults.get(CONF_READ_TIMEOUT, DEFAULT_READ_TIMEOUT)): int,
+            vol.Optional(CONF_AUTH_CODE, default=defaults.get(CONF_AUTH_CODE, "")): str, # CID / Intercom ID
+            vol.Required(CONF_POLL_INTERVAL_MIN, default=defaults.get(CONF_POLL_INTERVAL_MIN, 5)): int,
         }
     )
 
 
 def _validate(data: dict[str, Any]) -> dict[str, str]:
     errors: dict[str, str] = {}
-    if data[CONF_CGI_PORT] <= 0:
-        errors[CONF_CGI_PORT] = "invalid_port"
-    if data[CONF_DOOR] <= 0:
-        errors[CONF_DOOR] = "invalid_door"
-    if data[CONF_LOCK_NUMBER] not in (1, 2):
-        errors[CONF_LOCK_NUMBER] = "invalid_lock_number"
-    if data[CONF_READ_TIMEOUT] < 5:
-        errors[CONF_READ_TIMEOUT] = "invalid_timeout"
-    if data[CONF_ENABLE_DOWNCHANNEL]:
-        if not data.get(CONF_AUTH_BASE_URL):
-            errors[CONF_AUTH_BASE_URL] = "required"
-        if data.get(CONF_AUTH_MODE) != "free" and (
-            not data.get(CONF_AUTH_ACCOUNT) or not data.get(CONF_AUTH_PASSWORD)
-        ):
-            errors["base"] = "auth_credentials_required"
+    
+    # Fill in technical defaults if not present (internal use)
+    data.setdefault(CONF_CGI_PORT, DEFAULT_CGI_PORT)
+    data.setdefault(CONF_SCHEME, DEFAULT_SCHEME)
+    data.setdefault(CONF_USERNAME, "adminapp2")
+    data.setdefault(CONF_SECURITY, DEFAULT_SECURITY)
+    data.setdefault(CONF_DOOR, DEFAULT_DOOR)
+    data.setdefault(CONF_LOCK_NUMBER, DEFAULT_LOCK_NUMBER)
+    data.setdefault(CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL)
+    data.setdefault(CONF_AUTH_BASE_URL, "https://shi-1-sec.qvcloud.net:4443")
+    data.setdefault(CONF_AUTH_MODE, DEFAULT_AUTH_MODE)
+    data.setdefault(CONF_AUTH_TYPE, DEFAULT_AUTH_TYPE)
+    data.setdefault(CONF_IP_REGION_ID, DEFAULT_IP_REGION_ID)
+    data.setdefault(CONF_READ_TIMEOUT, DEFAULT_READ_TIMEOUT)
+    data.setdefault(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+    data.setdefault(CONF_HS_DEVICE, True)
+
+    if not data.get(CONF_DEVICE_HOST):
+        errors[CONF_DEVICE_HOST] = "required"
+    
+    # If cloud email is provided, password and CID are recommended
+    if data.get(CONF_AUTH_ACCOUNT):
+        if not data.get(CONF_AUTH_PASSWORD):
+            errors[CONF_AUTH_PASSWORD] = "required"
     return errors
 
 
@@ -137,6 +123,7 @@ class WelcomeEyeOptionsFlow(config_entries.OptionsFlow):
         if user_input is not None:
             errors = _validate(user_input)
             if not errors:
-                self.hass.config_entries.async_update_entry(self._config_entry, data=user_input)
+                new_data = {**self._config_entry.data, **user_input}
+                self.hass.config_entries.async_update_entry(self._config_entry, data=new_data)
                 return self.async_create_entry(title="", data={})
         return self.async_show_form(step_id="init", data_schema=_schema(current), errors=errors)

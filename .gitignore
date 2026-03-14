@@ -1,2 +1,15 @@
 __pycache__/
 *.pyc
+logs/
+apk/
+ghidra/
+native-helper-poc/
+frida/
+*.mitm
+flows-*
+test_bundle.json
+
+# Root research scripts
+extract_*.py
+test_*.py
+welcomeeye_*.py

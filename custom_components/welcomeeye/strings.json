@@ -3,42 +3,50 @@
     "step": {
       "user": {
         "title": "WelcomeEye",
-        "description": "Configure device CGI access and optional auth down-channel settings.",
+        "description": "Configure local access for the lock and optional cloud access for events (Watcher).",
         "data": {
-          "name": "Name",
-          "device_host": "Device IP or host",
-          "cgi_port": "CGI port",
-          "scheme": "Scheme",
-          "username": "Device username",
-          "device_password": "Local auth password",
-          "data_encode_key": "Data encode key (non-HS)",
-          "hs_device": "HS device",
-          "security": "Security header",
-          "door": "Door index",
-          "lock_number": "Default lock",
-          "open_password": "Door open password",
-          "verify_ssl": "Verify TLS certificate",
-          "enable_downchannel": "Enable down-channel listener",
-          "auth_base_url": "Auth base URL",
-          "alarm_base_url": "Alarm history base URL",
-          "auth_mode": "Auth mode",
-          "auth_account": "Auth account",
-          "auth_password": "Auth password",
-          "auth_type": "Auth type",
-          "auth_code": "Auth code",
-          "ip_region_id": "IP region ID",
-          "read_timeout": "Down-channel read timeout (s)"
+          "name": "Integration name",
+          "device_host": "Intercom IP (e.g. 192.168.1.50)",
+          "device_password": "Local code (6 digits from screen)",
+          "auth_account": "Cloud Email (optional)",
+          "auth_password": "Cloud Password",
+          "auth_code": "Intercom ID / CID",
+          "poll_interval_min": "Poll frequency (min, 0=never)"
         }
       }
     },
     "error": {
       "required": "This field is required.",
-      "invalid_port": "Port must be greater than 0.",
-      "invalid_door": "Door must be greater than 0.",
-      "invalid_lock_number": "Lock number must be 1 or 2.",
-      "invalid_timeout": "Timeout must be at least 5 seconds.",
-      "auth_credentials_required": "Auth account and password are required for this mode.",
-      "data_encode_key_recommended": "Non-HS mode usually requires data_encode_key."
+      "auth_credentials_required": "Cloud email and password are required to enable the Watcher."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "last_event_type": {
+        "name": "Last Event Type"
+      },
+      "last_unlock_method": {
+        "name": "Last Unlock Method"
+      },
+      "last_badge_id": {
+        "name": "Last Badge ID"
+      }
+    },
+    "binary_sensor": {
+      "doorbell": {
+        "name": "Doorbell"
+      }
+    },
+    "button": {
+      "open_latch": {
+        "name": "Open Latch"
+      },
+      "open_gate": {
+        "name": "Open Gate"
+      },
+      "refresh_events": {
+        "name": "Refresh Events"
+      }
     }
   }
 }

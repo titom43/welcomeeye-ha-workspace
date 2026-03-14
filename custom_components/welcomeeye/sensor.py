@@ -54,7 +54,7 @@ class _BaseWelcomeEyeSensor(SensorEntity):
 
 
 class WelcomeEyeEventTypeSensor(_BaseWelcomeEyeSensor):
-    _attr_name = "Last Event Type"
+    _attr_translation_key = "last_event_type"
 
     def __init__(self, entry: ConfigEntry, runtime: WelcomeEyeRuntime) -> None:
         super().__init__(entry, runtime)
@@ -89,7 +89,7 @@ class WelcomeEyeEventTypeSensor(_BaseWelcomeEyeSensor):
 
 
 class WelcomeEyeUnlockMethodSensor(_BaseWelcomeEyeSensor):
-    _attr_name = "Last Unlock Method"
+    _attr_translation_key = "last_unlock_method"
 
     def __init__(self, entry: ConfigEntry, runtime: WelcomeEyeRuntime) -> None:
         super().__init__(entry, runtime)
@@ -103,7 +103,7 @@ class WelcomeEyeUnlockMethodSensor(_BaseWelcomeEyeSensor):
 
 
 class WelcomeEyeBadgeIdSensor(_BaseWelcomeEyeSensor):
-    _attr_name = "Last Badge ID"
+    _attr_translation_key = "last_badge_id"
 
     def __init__(self, entry: ConfigEntry, runtime: WelcomeEyeRuntime) -> None:
         super().__init__(entry, runtime)

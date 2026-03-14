@@ -15,8 +15,29 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         [
             WelcomeEyeOpenLockButton(entry, runtime, lock_number=1, suffix="gache", name="Open Latch", icon="mdi:door-open"),
             WelcomeEyeOpenLockButton(entry, runtime, lock_number=2, suffix="portail", name="Open Gate", icon="mdi:gate-open"),
+            WelcomeEyeRefreshButton(entry, runtime),
         ]
     )
+
+
+class WelcomeEyeRefreshButton(ButtonEntity):
+    _attr_has_entity_name = True
+    _attr_translation_key = "refresh_events"
+    _attr_icon = "mdi:refresh"
+
+    def __init__(self, entry: ConfigEntry, runtime) -> None:
+        self._entry = entry
+        self._runtime = runtime
+        self._attr_unique_id = f"{entry.entry_id}_refresh"
+        self._attr_device_info = {
+            "identifiers": {("welcomeeye", entry.entry_id)},
+            "name": entry.data.get(CONF_NAME, "WelcomeEye"),
+            "manufacturer": "WelcomeEye",
+            "model": "Connect 3",
+        }
+
+    async def async_press(self) -> None:
+        await self._runtime.async_refresh()
 
 
 class WelcomeEyeOpenLockButton(ButtonEntity):
@@ -26,7 +47,7 @@ class WelcomeEyeOpenLockButton(ButtonEntity):
         self._entry = entry
         self._runtime = runtime
         self._lock_number = lock_number
-        self._attr_name = name
+        self._attr_translation_key = "open_latch" if lock_number == 1 else "open_gate"
         self._attr_icon = icon
         self._attr_unique_id = f"{entry.entry_id}_{suffix}"
         self._attr_device_info = {

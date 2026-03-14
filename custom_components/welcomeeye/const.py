@@ -1,7 +1,7 @@
 from homeassistant.const import Platform
 
 DOMAIN = "welcomeeye"
-PLATFORMS: list[Platform] = [Platform.BUTTON, Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.BUTTON, Platform.SENSOR, Platform.LOCK, Platform.BINARY_SENSOR]
 
 CONF_NAME = "name"
 CONF_DEVICE_HOST = "device_host"
@@ -27,6 +27,8 @@ CONF_AUTH_TYPE = "auth_type"
 CONF_AUTH_CODE = "auth_code"
 CONF_IP_REGION_ID = "ip_region_id"
 CONF_READ_TIMEOUT = "read_timeout"
+CONF_SCAN_INTERVAL = "scan_interval"
+CONF_POLL_INTERVAL_MIN = "poll_interval_min"
 
 DEFAULT_NAME = "WelcomeEye"
 DEFAULT_SCHEME = "https"
@@ -40,6 +42,7 @@ DEFAULT_AUTH_MODE = "user"
 DEFAULT_AUTH_TYPE = 0
 DEFAULT_IP_REGION_ID = 0
 DEFAULT_READ_TIMEOUT = 45
+DEFAULT_SCAN_INTERVAL = 300
 
 AUTH_MODES = ["user", "third", "deli", "free"]
 

@@ -3,41 +3,50 @@
     "step": {
       "user": {
         "title": "WelcomeEye",
-        "description": "Configurer l'accès CGI du périphérique et (optionnel) le down-channel auth.",
+        "description": "Configurez l'accès local pour la serrure et l'accès cloud pour les événements.",
         "data": {
-          "name": "Nom",
-          "device_host": "IP ou hôte du périphérique",
-          "cgi_port": "Port CGI",
-          "scheme": "Schéma",
-          "username": "Nom d'utilisateur device",
-          "device_password": "Mot de passe d'auth locale",
-          "data_encode_key": "Data encode key (non-HS)",
-          "hs_device": "Périphérique HS",
-          "security": "Header security",
-          "door": "Index de porte",
-          "lock_number": "Serrure par défaut",
-          "open_password": "Mot de passe d'ouverture porte",
-          "verify_ssl": "Vérifier le certificat TLS",
-          "enable_downchannel": "Activer le listener down-channel",
-          "auth_base_url": "URL de base auth",
-          "alarm_base_url": "URL de base historique alarmes",
-          "auth_mode": "Mode auth",
-          "auth_account": "Compte auth",
-          "auth_password": "Mot de passe auth",
-          "auth_type": "Type auth",
-          "auth_code": "Code auth",
-          "ip_region_id": "IP region ID",
-          "read_timeout": "Timeout lecture down-channel (s)"
+          "name": "Nom de l'intégration",
+          "device_host": "IP du portier (ex: 192.168.1.50)",
+          "device_password": "Code local (6 chiffres écran)",
+          "auth_account": "Email Cloud (optionnel)",
+          "auth_password": "Mot de passe Cloud",
+          "auth_code": "ID Interphone / CID",
+          "poll_interval_min": "Fréquence de polling (min, 0=jamais)"
         }
       }
     },
     "error": {
       "required": "Ce champ est requis.",
-      "invalid_port": "Le port doit être supérieur à 0.",
-      "invalid_door": "L'index de porte doit être supérieur à 0.",
-      "invalid_lock_number": "La serrure doit valoir 1 ou 2.",
-      "invalid_timeout": "Le timeout doit être au moins 5 secondes.",
-      "auth_credentials_required": "Compte et mot de passe auth requis pour ce mode."
+      "auth_credentials_required": "L'email et le mot de passe cloud sont requis pour activer le Watcher."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "last_event_type": {
+        "name": "Dernier type d'événement"
+      },
+      "last_unlock_method": {
+        "name": "Dernière méthode de déverrouillage"
+      },
+      "last_badge_id": {
+        "name": "Dernier ID de badge"
+      }
+    },
+    "binary_sensor": {
+      "doorbell": {
+        "name": "Sonnette"
+      }
+    },
+    "button": {
+      "open_latch": {
+        "name": "Ouvrir la gâche"
+      },
+      "open_gate": {
+        "name": "Ouvrir le portail"
+      },
+      "refresh_events": {
+        "name": "Rafraîchir les événements"
+      }
     }
   }
 }

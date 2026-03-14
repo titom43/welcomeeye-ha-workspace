@@ -1,93 +1,90 @@
-# WelcomeEye HA Workspace
+# WelcomeEye Local
 
-This repository now contains:
+<p align="center">
+  <img src="assets/logo.svg" alt="WelcomeEye Local logo" width="160">
+</p>
 
-- Standalone reverse-engineering/testing scripts
-- A full Home Assistant custom integration (HACS-ready): `custom_components/welcomeeye`
+<p align="center">
+  Local control for WelcomeEye intercoms from Home Assistant.
+</p>
 
-## HACS Integration
+<p align="center">
+  <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=titom43&repository=welcomeeye-ha-workspace&category=integration">
+    <img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open your Home Assistant instance and open this repository in HACS">
+  </a>
+  <a href="https://my.home-assistant.io/redirect/config_flow_start/?domain=welcomeeye">
+    <img src="https://my.home-assistant.io/badges/config_flow_start.svg" alt="Open your Home Assistant instance and start setting up WelcomeEye Local">
+  </a>
+</p>
 
-### Install
+## What it does
 
-1. Add this private repo as a custom repository in HACS (category: `Integration`).
-2. Install `WelcomeEye Local`.
-3. Restart Home Assistant.
-4. Go to `Settings -> Devices & Services -> Add Integration -> WelcomeEye Local`.
+- Opens the **latch** and the **gate** through the local device API.
+- Supports direct LAN control without an Android bridge.
+- Exposes simple Home Assistant entities and a door opening service.
 
-### Parameters requested at install
+Current local scope:
 
-- Local LAN control:
-  - `device_host`, `cgi_port`, `scheme`
-  - recommended local defaults:
-    - `scheme=https`
-    - `cgi_port=443`
-    - `username=adminapp2`
-    - `security=username`
-  - `device_password`
-    - local auth password used in the XML header
-    - on this device it is the 64-char auth code
-  - `door`
-    - usually `1`
-  - `lock_number`
-    - `1 = gâche`
-    - `2 = portail`
-  - `open_password`
-    - door unlock password used in the command content
-    - on this device it is the same 64-char auth code
-  - `verify_ssl`
-- Optional down-channel listener:
-  - `enable_downchannel`
-  - `auth_base_url`, `alarm_base_url`, `auth_mode`
-  - `auth_account`, `auth_password` (except free mode)
-  - `auth_type`, `auth_code`, `ip_region_id`, `read_timeout`
-  - `alarm_base_url` can be left empty if your auth host follows the usual
-    `shi-XX-sec.qvcloud.net` pattern; the integration will derive
-    `https://shi-(XX+1)-sec.qvcloud.net:4443/UserAlarm`
+- `lock_number=1` -> latch
+- `lock_number=2` -> gate
 
-### Entities and service
+## Installation
 
-- Buttons:
-  - `Open Latch`
-  - `Open Gate`
-- Sensors:
-  - `Last Event Type`
-  - `Last Unlock Method`
-  - `Last Badge ID`
-- Service:
-  - `welcomeeye.open_door`
-  - optional fields: `entry_id`, `door`, `lock_number`
+### HACS
 
-### Local opening path
+1. Open the HACS button above.
+2. Add this repository as an **Integration**.
+3. Install **WelcomeEye Local**.
+4. Restart Home Assistant.
+5. Add the integration from `Settings -> Devices & Services`.
 
-The integration now tries the local XML API first:
+### Manual
 
-- `POST https://<device_host>:443/tdkcgi`
-- XML auth in the envelope header
-- no Android bridge required
+1. Copy `custom_components/welcomeeye` into your Home Assistant `custom_components` directory.
+2. Restart Home Assistant.
+3. Add the integration from `Settings -> Devices & Services`.
 
-If that local path does not answer as expected, the integration keeps the previous digest path as a fallback.
+## Configuration
 
-### Badge unlock info
+Recommended local defaults:
 
-The integration now combines:
+- `scheme=https`
+- `cgi_port=443`
+- `username=adminapp2`
+- `security=username`
 
-- local LAN opening on `443`
-- optional cloud event polling from `UserAlarm`
+Password fields accept either:
 
-Reliable event mappings observed on this device:
+- the raw device code you chose on the monitor
+- or the already encoded 64-character SHA-256 value
 
-- `event=19`, `alarmState=1` -> ring
-- `event=63`, `alarmState=4` -> app/remote unlock
-- `event=63`, `alarmState=5` -> badge unlock
+## Entities
 
-Current limitation:
-- the app/cloud payloads observed so far do not expose the badge name (`Alice`, etc.),
-  so `Last Badge ID` will usually stay empty even when the unlock method is correctly
-  classified as `badge`.
+- Button: `Open Latch`
+- Button: `Open Gate`
+- Sensor: `Last Event Type`
+- Sensor: `Last Unlock Method`
+- Sensor: `Last Badge ID`
 
-## Utility Scripts
+## Service
 
-- `welcomeeye_auth_endpoint_finder_macos.py`
-- `welcomeeye_downchannel_listener.py`
-- `welcomeeye_httpauthen_sim.py`
-- `welcomeeye_open_door.py`
+Service name:
+
+- `welcomeeye.open_door`
+
+Optional service fields:
+
+- `entry_id`
+- `door`
+- `lock_number`
+
+## Notes
+
+- Local unlock uses the device XML API on `https://<device_host>:443/tdkcgi`.
+- Badge names are not currently exposed by the payloads we observed.
+- The integration is designed to stay usable with only the data needed for Home Assistant.
+
+## Support
+
+- Issues: [GitHub Issues](https://github.com/titom43/welcomeeye-ha-workspace/issues)
+- Documentation: [Repository](https://github.com/titom43/welcomeeye-ha-workspace)

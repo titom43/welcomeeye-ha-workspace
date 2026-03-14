@@ -132,6 +132,9 @@ def parse_downchannel_payload(payload: str) -> dict[str, Any]:
             unlock_method = "badge"
         event_type = "badge" if event_type == "other" else event_type
 
+    if command == "setServiceUrl":
+        event_type = "service_update"
+
     badge_match = BADGE_ID_RE.search(hay)
     if badge_match:
         badge_id = badge_match.group(1)
