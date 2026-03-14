@@ -58,6 +58,7 @@ def _schema(defaults: dict[str, Any], is_options: bool = False) -> vol.Schema:
     if is_options:
         # Allow advanced tuning in options flow
         schema[vol.Optional(CONF_AUTH_BASE_URL, default=defaults.get(CONF_AUTH_BASE_URL, "https://shi-1-sec.qvcloud.net"))] = str
+        schema[vol.Optional(CONF_AUTH_CODE, default=defaults.get(CONF_AUTH_CODE, ""))] = str
         
     return vol.Schema(schema)
 

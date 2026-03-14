@@ -11,6 +11,7 @@
           "auth_account": "Email Cloud (optionnel)",
           "auth_password": "Mot de passe Cloud",
           "auth_base_url": "URL Auth (Avancé)",
+          "auth_code": "UID Interphone (Optionnel)",
           "poll_interval_min": "Fréquence de polling (min, 0=jamais)"
         }
       }

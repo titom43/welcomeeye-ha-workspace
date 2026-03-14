@@ -474,10 +474,12 @@ class WelcomeEyeClient:
             
         # Add seeds if needed (common entry points)
         seeds = [
-            "https://shi-19-sec.qvcloud.net",
-            "https://shi-27-sec.qvcloud.net",
-            "https://shi-1-sec.qvcloud.net",
-            "https://api-sec.qvcloud.net",
+            "https://shi-19-sec.qvcloud.net:4443",
+            "https://shi-19-sec.qvcloud.net:443",
+            "https://shi-27-sec.qvcloud.net:4443",
+            "https://shi-27-sec.qvcloud.net:443",
+            "https://api-sec.qvcloud.net:4443",
+            "https://api-sec.qvcloud.net:443",
         ]
         for seed in seeds:
             if seed not in bases_to_try:
@@ -485,7 +487,13 @@ class WelcomeEyeClient:
 
         path = UP_PATH_BY_MODE[mode]
         payload = _build_login_xml(self._config)
-        headers = {"Content-Type": "application/xml;charset=utf-8", "Accept": "*/*"}
+        headers = {
+            "Content-Type": "application/xml;charset=utf-8",
+            "Accept": "*/*",
+            "User-Agent": "okhttp/3.12.13",
+            "Accept-Encoding": "gzip",
+            "Connection": "Keep-Alive",
+        }
 
         for base in bases_to_try:
             url = f"{base.rstrip('/')}{path}"
@@ -536,7 +544,13 @@ class WelcomeEyeClient:
         candidates.extend(_candidate_alarm_bases(auth_base))
 
         auth_server_host = urlparse(auth_base).hostname or ""
-        headers = {"Content-Type": "application/xml;charset=utf-8", "Accept": "*/*"}
+        headers = {
+            "Content-Type": "application/xml;charset=utf-8",
+            "Accept": "*/*",
+            "User-Agent": "okhttp/3.12.13",
+            "Accept-Encoding": "gzip",
+            "Connection": "Keep-Alive",
+        }
         if self._cookies:
             headers["Cookie"] = "; ".join(f"{k}={v}" for k, v in self._cookies.items())
 
@@ -579,7 +593,13 @@ class WelcomeEyeClient:
         if not url.endswith("/UserAlarm") and "UserAlarm" not in url:
             url = f"{url}/UserAlarm"
             
-        headers = {"Content-Type": "application/xml;charset=utf-8", "Accept": "*/*"}
+        headers = {
+            "Content-Type": "application/xml;charset=utf-8",
+            "Accept": "*/*",
+            "User-Agent": "okhttp/3.12.13",
+            "Accept-Encoding": "gzip",
+            "Connection": "Keep-Alive",
+        }
         if self._cookies:
             headers["Cookie"] = "; ".join(f"{k}={v}" for k, v in self._cookies.items())
         

@@ -11,6 +11,7 @@
           "auth_account": "Cloud Email (optional)",
           "auth_password": "Cloud Password",
           "auth_base_url": "Auth base URL (Advanced)",
+          "auth_code": "Intercom UID (Optional)",
           "poll_interval_min": "Poll frequency (min, 0=never)"
         }
       }
