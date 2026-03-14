@@ -103,6 +103,7 @@ def _build_digest_authorization(
 
 
 def _build_login_xml(config: dict[str, Any]) -> str:
+    client_id = config.get("client_id", "003-4123-09f95ff624058e33")
     return (
         '<?xml version="1.0" encoding="UTF-8"?>'
         "<envelope>"
@@ -114,7 +115,7 @@ def _build_login_xml(config: dict[str, Any]) -> str:
         "<session></session>"
         "<user-data></user-data>"
         "<client>"
-        "<id>ha-welcomeeye</id>"
+        f"<id>{client_id}</id>"
         "<type>3</type>"
         "<oem>G0123,A0058,G0058</oem>"
         "<app>4123</app>"
@@ -138,6 +139,7 @@ def _build_alarm_login_xml(
     auth_server_host: str,
     auth_token: str,
 ) -> str:
+    client_id = config.get("client_id", "003-4123-09f95ff624058e33")
     return (
         '<?xml version="1.0" encoding="UTF-8"?>'
         "<envelope>"
@@ -147,10 +149,10 @@ def _build_alarm_login_xml(
         f"<id>{account_id}</id>"
         "</account>"
         "<client>"
-        f"<appid>{config.get('app_id', 4123)}</appid>"
-        f"<id>{config.get('client_id', 'ha-welcomeeye')}</id>"
+        "<appid>4123</appid>"
+        f"<id>{client_id}</id>"
         "<notifylang>French</notifylang>"
-        f"<oemid>{config.get('oem_id', 'ha')}</oemid>"
+        "<oemid>ha</oemid>"
         "<timezone>GMT+01:00</timezone>"
         f"<token>{config.get(CONF_AUTH_CODE, auth_token)}</token>"
         "<tokentype>1</tokentype>"
@@ -204,7 +206,6 @@ def _candidate_alarm_bases(auth_base_url: str) -> list[str]:
     n = int(m.group(2))
     prefix = m.group(1)
     suffix = m.group(3)
-    # The demo script tries several offsets, we can do the same
     offsets = [0, 1, -1, 2, -2, 3, -3]
     out: list[str] = []
     for off in offsets:
@@ -221,22 +222,22 @@ def _build_open_door_xml(
     door: int | None = None,
     lock_number: int | None = None,
 ) -> str:
-    door_value = door if door is not None else config[CONF_DOOR]
+    door_value = door if door is not None else config.get(CONF_DOOR, 1)
     lock_value = lock_number if lock_number is not None else config.get(CONF_LOCK_NUMBER, 1)
     return (
         '<?xml version="1.0" encoding="UTF-8"?>'
         "<envelope>"
         "<header>"
-        f"<security>{config[CONF_SECURITY]}</security>"
-        f"<username>{config[CONF_USERNAME]}</username>"
-        f"<password>{config[CONF_DEVICE_PASSWORD]}</password>"
+        f"<security>{config.get(CONF_SECURITY, 'username')}</security>"
+        f"<username>{config.get(CONF_USERNAME, 'adminapp2')}</username>"
+        f"<password>{config.get(CONF_DEVICE_PASSWORD, '')}</password>"
         "</header>"
         "<body>"
         "<command>set.device.opendoor</command>"
         "<content>"
         f"<door>{door_value}</door>"
         f"<locknumber>{lock_value}</locknumber>"
-        f"<password>{config[CONF_OPEN_PASSWORD]}</password>"
+        f"<password>{config.get(CONF_OPEN_PASSWORD, '')}</password>"
         "</content>"
         "</body>"
         "</envelope>"
@@ -249,7 +250,7 @@ def _build_local_open_door_xml(
     door: int | None = None,
     lock_number: int | None = None,
 ) -> str:
-    door_value = door if door is not None else config[CONF_DOOR]
+    door_value = door if door is not None else config.get(CONF_DOOR, 1)
     lock_value = lock_number if lock_number is not None else config.get(CONF_LOCK_NUMBER, 1)
     header_password = _encode_device_password(config.get(CONF_DEVICE_PASSWORD) or config.get(CONF_OPEN_PASSWORD, ""))
     open_password = _encode_device_password(config.get(CONF_OPEN_PASSWORD) or config.get(CONF_DEVICE_PASSWORD, ""))
@@ -302,51 +303,30 @@ class WelcomeEyeClient:
 
     @property
     def _ssl(self) -> bool:
-        return self._config[CONF_VERIFY_SSL]
+        return self._config.get(CONF_VERIFY_SSL, False)
 
     @property
     def _cgi_base(self) -> str:
-        scheme = self._config[CONF_SCHEME]
-        host = self._config[CONF_DEVICE_HOST]
-        port = self._config[CONF_CGI_PORT]
+        scheme = self._config.get(CONF_SCHEME, "https")
+        host = self._config.get(CONF_DEVICE_HOST, "127.0.0.1")
+        port = self._config.get(CONF_CGI_PORT, 443)
         return f"{scheme}://{host}:{port}"
 
     def _auth_base(self) -> str | None:
         if self._dynamic_auth_base:
             return self._dynamic_auth_base
-
         raw = self._config.get(CONF_AUTH_BASE_URL) or ""
         if not raw:
-            return None
-        parsed = urlparse(raw)
-        if not parsed.scheme:
             return None
         return raw.rstrip("/")
 
     def _alarm_base(self) -> str | None:
         if self._dynamic_alarm_base:
             return self._dynamic_alarm_base
-
         explicit = (self._config.get(CONF_ALARM_BASE_URL) or "").strip()
         if explicit:
             return explicit.rstrip("/")
-
         return None
-
-    def update_service_url(self, group_id: int, service_type: int, url: str) -> None:
-        """Update dynamic service URLs from responses."""
-        if not url:
-            return
-        clean_url = url.rstrip("/")
-        if service_type == 0:
-            _LOGGER.debug("Updating dynamic auth base (type 0) to %s", clean_url)
-            self._dynamic_auth_base = clean_url
-        elif service_type == 1:
-            if not clean_url.endswith("/UserAlarm") and (":4443" in clean_url or "UserAlarm" not in clean_url):
-                if "UserAlarm" not in clean_url:
-                    clean_url = f"{clean_url}/UserAlarm"
-            _LOGGER.debug("Updating dynamic alarm base (type 1) to %s", clean_url)
-            self._dynamic_alarm_base = clean_url
 
     async def _request(
         self,
@@ -366,108 +346,45 @@ class WelcomeEyeClient:
         path = "/tdkcgi"
         url = f"{self._cgi_base}{path}"
         headers = {"Content-Type": "application/xml;charset=utf-8", "Accept": "*/*"}
-
-        # Preferred local/LAN path
-        local_xml_payload = _build_local_open_door_xml(
-            self._config,
-            door=door,
-            lock_number=lock_number,
-        )
+        local_xml_payload = _build_local_open_door_xml(self._config, door=door, lock_number=lock_number)
         try:
             local = await self._request("POST", url, data=local_xml_payload, headers=headers, timeout=12)
             local_body = await local.text()
             local_error = _parse_cgi_error(local_body)
             if local.status == 200 and local_error == "0":
-                return {
-                    "ok": True,
-                    "http_status": local.status,
-                    "cgi_error": local_error,
-                    "response": local_body[:4000],
-                    "method": "local_xml",
-                }
+                return {"ok": True, "http_status": local.status, "cgi_error": local_error, "method": "local_xml"}
         except Exception as exc:
             _LOGGER.debug("Local XML open_door failed: %s", exc)
-
-        # Fallback for older digest-based setups
-        xml_payload = _build_open_door_xml(self._config, door=door, lock_number=lock_number)
-        try:
-            first = await self._request("POST", url, data=xml_payload, headers=headers, timeout=12)
-            first_body = await first.text()
-            first_error = _parse_cgi_error(first_body)
-            if first.status != 401:
-                return {
-                    "ok": first.status == 200 and first_error == "0",
-                    "http_status": first.status,
-                    "cgi_error": first_error,
-                    "response": first_body[:4000],
-                    "method": "digest_fallback",
-                }
-
-            challenge = _parse_challenge(first.headers.get("WWW-Authenticate", ""))
-            auth_header = _build_digest_authorization(
-                username=self._config[CONF_USERNAME],
-                password=self._config[CONF_DEVICE_PASSWORD],
-                data_encode_key=self._config[CONF_DATA_ENCODE_KEY],
-                challenge=challenge,
-                is_hs_device=self._config[CONF_HS_DEVICE],
-                uri=path,
-            )
-            second_headers = dict(headers)
-            second_headers["Authorization"] = auth_header
-            second = await self._request("POST", url, data=xml_payload, headers=second_headers, timeout=12)
-            second_body = await second.text()
-            error = _parse_cgi_error(second_body)
-            return {
-                "ok": second.status == 200 and error == "0",
-                "http_status": second.status,
-                "cgi_error": error,
-                "response": second_body[:4000],
-                "method": "digest_fallback",
-            }
-        except Exception as exc:
-            return {"ok": False, "error": str(exc), "method": "failed"}
+        return {"ok": False, "method": "failed"}
 
     async def login_auth(self) -> bool:
-        configured_base = self._auth_base()
-        mode = self._config.get(CONF_AUTH_MODE)
-        if mode not in AUTH_MODES:
-            return False
-        
+        mode = self._config.get(CONF_AUTH_MODE, "user")
         account = self._config.get(CONF_AUTH_ACCOUNT)
         password = self._config.get(CONF_AUTH_PASSWORD)
-        
-        if mode != "free" and (not account or not password):
+        if not account or not password:
             return False
 
-        # If password is not already a hash (64 chars), hash it in SHA256
-        if password and len(password) != 64:
-            _LOGGER.debug("Hashing cloud password for authentication")
+        # SHA256 Hashing
+        if len(password) != 64:
             password = hashlib.sha256(password.encode("utf-8")).hexdigest()
 
-        # Update a temporary copy of config for the XML builder
         temp_config = dict(self._config)
         temp_config[CONF_AUTH_PASSWORD] = password
 
-        # If we have a dynamic base that worked before, use it first
         bases_to_try = []
-        if self._dynamic_auth_base:
-            bases_to_try.append(self._dynamic_auth_base)
-        if configured_base:
-            bases_to_try.append(configured_base)
-            
-        # Add seeds
+        if self._dynamic_auth_base: bases_to_try.append(self._dynamic_auth_base)
+        if self._auth_base(): bases_to_try.append(self._auth_base())
+        
         seeds = [
             "https://shi-19-sec.qvcloud.net",
             "https://shi-19-sec.qvcloud.net:4443",
             "https://shi-27-sec.qvcloud.net",
-            "https://shi-27-sec.qvcloud.net:4443",
             "https://api-sec.qvcloud.net",
         ]
         for seed in seeds:
-            if seed not in bases_to_try:
-                bases_to_try.append(seed)
+            if seed not in bases_to_try: bases_to_try.append(seed)
 
-        path = UP_PATH_BY_MODE[mode]
+        path = UP_PATH_BY_MODE.get(mode, "/auth/user;jus_duplex=up")
         payload = _build_login_xml(temp_config)
         headers = {
             "Content-Type": "application/xml;charset=utf-8",
@@ -480,54 +397,36 @@ class WelcomeEyeClient:
 
         for base in bases_to_try:
             url = f"{base.rstrip('/')}{path}"
-            _LOGGER.debug("Attempting cloud login on %s", url)
             try:
                 resp = await self._request("POST", url, data=payload, headers=headers, timeout=10)
                 body = await resp.text()
-                if resp.status != 200:
-                    _LOGGER.debug("Server %s returned HTTP %s", base, resp.status)
-                    continue
-
+                if resp.status != 200: continue
                 root = ET.fromstring(body)
                 res = root.findtext("./header/result")
                 if res != "0":
-                    _LOGGER.debug("Cloud login rejected by %s (Result code: %s)", base, res)
+                    _LOGGER.info("Cloud login rejected by %s (Error %s)", base, res)
                     continue
-
                 self._cookies.clear()
-                for cookie in resp.cookies.values():
-                    self._cookies[cookie.key] = cookie.value
-                
+                for cookie in resp.cookies.values(): self._cookies[cookie.key] = cookie.value
                 self._auth_session_id = root.findtext("./header/session/id") or root.findtext("./header/session")
                 content = root.find("./content")
                 if content is not None:
                     self._account_id = (content.findtext("account-id") or "").strip()
                     self._auth_token = (content.findtext("token") or "").strip()
-                
-                # Success! Save this as our current auth base
                 self._dynamic_auth_base = base
                 self._auth_server_host = urlparse(base).hostname
                 _LOGGER.info("Successfully logged in to WelcomeEye Cloud via %s", base)
                 return True
-            except Exception as exc:
-                _LOGGER.debug("Auth login failed on %s: %s", base, exc)
-                continue
-
-        _LOGGER.error("Failed to find a working WelcomeEye Cloud authentication server")
+            except Exception: continue
         return False
 
     async def login_alarm(self) -> bool:
         auth_base = self._auth_base()
         if not auth_base or not self._auth_session_id or not self._account_id:
             return False
-        
-        # Build candidates for alarm server
-        candidates: list[str] = []
-        explicit = self._alarm_base()
-        if explicit:
-            candidates.append(explicit)
+        candidates = []
+        if self._alarm_base(): candidates.append(self._alarm_base())
         candidates.extend(_candidate_alarm_bases(auth_base))
-
         auth_server_host = self._auth_server_host or urlparse(auth_base).hostname or ""
         headers = {
             "Content-Type": "application/xml;charset=utf-8",
@@ -537,48 +436,28 @@ class WelcomeEyeClient:
             "Accept-Language": "fr-FR",
             "Connection": "Keep-Alive",
         }
-        if self._cookies:
-            headers["Cookie"] = "; ".join(f"{k}={v}" for k, v in self._cookies.items())
-
+        if self._cookies: headers["Cookie"] = "; ".join(f"{k}={v}" for k, v in self._cookies.items())
         for candidate in candidates:
             url = candidate.rstrip("/")
-            if not url.endswith("/UserAlarm") and "UserAlarm" not in url:
-                url = f"{url}/UserAlarm"
-            
-            payload = _build_alarm_login_xml(
-                self._config,
-                self._auth_session_id,
-                self._account_id,
-                auth_server_host,
-                self._auth_token or "",
-            )
-            
+            if "/UserAlarm" not in url: url = f"{url}/UserAlarm"
+            payload = _build_alarm_login_xml(self._config, self._auth_session_id, self._account_id, auth_server_host, self._auth_token or "")
             try:
                 resp = await self._request("POST", url, data=payload, headers=headers, timeout=10)
                 body = await resp.text()
                 if resp.status == 200:
                     root = ET.fromstring(body)
-                    res = root.findtext("./header/result")
-                    if res == "0":
+                    if root.findtext("./header/result") == "0":
                         self._alarm_session_id = root.findtext("./header/session/id") or root.findtext("./header/session")
                         self._dynamic_alarm_base = candidate
-                        _LOGGER.debug("Alarm login successful on %s", candidate)
                         return True
-                _LOGGER.debug("Alarm login failed on %s: status=%s", candidate, resp.status)
-            except Exception as exc:
-                _LOGGER.debug("Alarm login error on %s: %s", candidate, exc)
-
+            except Exception: continue
         return False
 
     async def query_alarm_list(self, *, page_num: int = 0, page_line_num: int = 15, max_id: str = "0") -> list[dict[str, Any]]:
         base = self._dynamic_alarm_base or self._alarm_base()
-        if not base:
-            return []
-        
+        if not base: return []
         url = base.rstrip("/")
-        if not url.endswith("/UserAlarm") and "UserAlarm" not in url:
-            url = f"{url}/UserAlarm"
-            
+        if "/UserAlarm" not in url: url = f"{url}/UserAlarm"
         headers = {
             "Content-Type": "application/xml;charset=utf-8",
             "Accept": "*/*",
@@ -587,43 +466,29 @@ class WelcomeEyeClient:
             "Accept-Language": "fr-FR",
             "Connection": "Keep-Alive",
         }
-        if self._cookies:
-            headers["Cookie"] = "; ".join(f"{k}={v}" for k, v in self._cookies.items())
-        
+        if self._cookies: headers["Cookie"] = "; ".join(f"{k}={v}" for k, v in self._cookies.items())
         session_id = self._alarm_session_id or self._auth_session_id or ""
         payload = _build_alarm_list_xml(self._config, session_id, page_num=page_num, page_line_num=page_line_num, max_id=max_id)
-        
         try:
             resp = await self._request("POST", url, data=payload, headers=headers, timeout=15)
             body = await resp.text()
-            if resp.status != 200:
-                _LOGGER.debug("Alarm list query failed status=%s", resp.status)
-                return []
-            
+            if resp.status != 200: return []
             root = ET.fromstring(body)
-            result = root.findtext("./header/result")
-            if result not in (None, "", "0"):
-                _LOGGER.debug("Alarm list query result error: %s", result)
-                return []
-            
-            items: list[dict[str, Any]] = []
+            if root.findtext("./header/result") not in (None, "", "0"): return []
+            items = []
             for node in root.findall(".//record/data") or root.findall(".//record/alarmList/data"):
-                items.append(
-                    {
-                        "id": (node.findtext("id") or "").strip(),
-                        "alarmid": (node.findtext("alarmid") or "").strip(),
-                        "devid": (node.findtext("devid") or "").strip(),
-                        "event": (node.findtext("event") or "").strip(),
-                        "alarmstate": (node.findtext("alarmstate") or "").strip(),
-                        "alarminfo": (node.findtext("alarminfo") or "").strip(),
-                        "alarmsource": (node.findtext("alarmsource") or "").strip(),
-                        "alarmsourcename": (node.findtext("alarmsourcename") or "").strip(),
-                        "time": (node.findtext("time") or "").strip(),
-                        "msgsavetype": (node.findtext("msgsavetype") or "").strip(),
-                        "msgstate": (node.findtext("msgstate") or "").strip(),
-                    }
-                )
+                items.append({
+                    "id": (node.findtext("id") or "").strip(),
+                    "alarmid": (node.findtext("alarmid") or "").strip(),
+                    "devid": (node.findtext("devid") or "").strip(),
+                    "event": (node.findtext("event") or "").strip(),
+                    "alarmstate": (node.findtext("alarmstate") or "").strip(),
+                    "alarminfo": (node.findtext("alarminfo") or "").strip(),
+                    "alarmsource": (node.findtext("alarmsource") or "").strip(),
+                    "alarmsourcename": (node.findtext("alarmsourcename") or "").strip(),
+                    "time": (node.findtext("time") or "").strip(),
+                    "msgsavetype": (node.findtext("msgsavetype") or "").strip(),
+                    "msgstate": (node.findtext("msgstate") or "").strip(),
+                })
             return items
-        except Exception as exc:
-            _LOGGER.error("Failed to query alarm list: %s", exc)
-            return []
+        except Exception: return []
